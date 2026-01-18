@@ -23,6 +23,7 @@ use std::ffi::OsString;
 use std::fs::File;
 use std::iter;
 use std::num::NonZeroU32;
+use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -62,6 +63,7 @@ use crate::ref_name::RemoteName;
 use crate::ref_name::RemoteNameBuf;
 use crate::ref_name::RemoteRefSymbol;
 use crate::ref_name::RemoteRefSymbolBuf;
+use crate::ref_name::WorkspaceName;
 use crate::refs::BookmarkPushUpdate;
 use crate::repo::MutableRepo;
 use crate::repo::Repo;
@@ -373,6 +375,18 @@ pub fn get_git_backend(store: &Store) -> Result<&GitBackend, UnexpectedGitBacken
 /// Returns new thread-local instance to access to the underlying Git repo.
 pub fn get_git_repo(store: &Store) -> Result<gix::Repository, UnexpectedGitBackendError> {
     get_git_backend(store).map(|backend| backend.git_repo())
+}
+
+/// Opens a git repository at the given path using JJ settings for config overrides.
+pub fn open_git_repo_at(
+    settings: &UserSettings,
+    path: &Path,
+) -> Result<gix::Repository, gix::open::Error> {
+    let repo = gix::ThreadSafeRepository::open_opts(
+        path,
+        crate::git_backend::gix_open_opts_from_settings(settings).open_path_as_is(false),
+    )?;
+    Ok(repo.to_thread_local())
 }
 
 /// Checks if `git_ref` points to a Git commit object, and returns its id.
@@ -898,8 +912,19 @@ pub fn import_head(mut_repo: &mut MutableRepo) -> Result<(), GitImportError> {
     let store = mut_repo.store();
     let git_backend = get_git_backend(store)?;
     let git_repo = git_backend.git_repo();
+    import_head_with_repo(mut_repo, WorkspaceName::DEFAULT, &git_repo)
+}
 
-    let old_git_head = mut_repo.view().git_head();
+/// Imports HEAD from the given Git repo for the specified workspace.
+pub fn import_head_with_repo(
+    mut_repo: &mut MutableRepo,
+    workspace_name: &WorkspaceName,
+    git_repo: &gix::Repository,
+) -> Result<(), GitImportError> {
+    let store = mut_repo.store();
+    let git_backend = get_git_backend(store)?;
+
+    let old_git_head = mut_repo.git_head_for_workspace(workspace_name);
     let new_git_head_id = if let Ok(oid) = git_repo.head_id() {
         Some(CommitId::from_bytes(oid.as_bytes()))
     } else {
@@ -928,7 +953,10 @@ pub fn import_head(mut_repo: &mut MutableRepo) -> Result<(), GitImportError> {
             .map_err(GitImportError::Backend)?;
     }
 
-    mut_repo.set_git_head_target(RefTarget::resolved(new_git_head_id));
+    mut_repo.set_git_head_target_for_workspace(
+        workspace_name.to_owned(),
+        RefTarget::resolved(new_git_head_id),
+    );
     Ok(())
 }
 
@@ -1022,14 +1050,28 @@ pub fn export_some_refs(
     mut_repo: &mut MutableRepo,
     git_ref_filter: impl Fn(GitRefKind, RemoteRefSymbol<'_>) -> bool,
 ) -> Result<GitExportStats, GitExportError> {
+    let git_repo = get_git_repo(mut_repo.store())?;
+    export_some_refs_with_repo(mut_repo, &git_repo, git_ref_filter)
+}
+
+pub fn export_refs_with_repo(
+    mut_repo: &mut MutableRepo,
+    git_repo: &gix::Repository,
+) -> Result<GitExportStats, GitExportError> {
+    export_some_refs_with_repo(mut_repo, git_repo, |_, _| true)
+}
+
+pub fn export_some_refs_with_repo(
+    mut_repo: &mut MutableRepo,
+    git_repo: &gix::Repository,
+    git_ref_filter: impl Fn(GitRefKind, RemoteRefSymbol<'_>) -> bool,
+) -> Result<GitExportStats, GitExportError> {
     fn get<'a, V>(map: &'a [(RemoteRefSymbolBuf, V)], key: RemoteRefSymbol<'_>) -> Option<&'a V> {
         debug_assert!(map.is_sorted_by_key(|(k, _)| k));
         let index = map.binary_search_by_key(&key, |(k, _)| k.as_ref()).ok()?;
         let (_, value) = &map[index];
         Some(value)
     }
-
-    let git_repo = get_git_repo(mut_repo.store())?;
 
     let AllRefsToExport { bookmarks, tags } = diff_refs_to_export(
         mut_repo.view(),
@@ -1464,6 +1506,17 @@ impl GitResetHeadError {
 /// the Git index.
 pub fn reset_head(mut_repo: &mut MutableRepo, wc_commit: &Commit) -> Result<(), GitResetHeadError> {
     let git_repo = get_git_repo(mut_repo.store())?;
+    reset_head_with_repo(mut_repo, WorkspaceName::DEFAULT, &git_repo, wc_commit)
+}
+
+/// Sets Git HEAD to the parent of the given working-copy commit and resets
+/// the Git index for the specified workspace.
+pub fn reset_head_with_repo(
+    mut_repo: &mut MutableRepo,
+    workspace_name: &WorkspaceName,
+    git_repo: &gix::Repository,
+    wc_commit: &Commit,
+) -> Result<(), GitResetHeadError> {
 
     let first_parent_id = &wc_commit.parent_ids()[0];
     let new_head_target = if first_parent_id != mut_repo.store().root_commit_id() {
@@ -1473,7 +1526,7 @@ pub fn reset_head(mut_repo: &mut MutableRepo, wc_commit: &Commit) -> Result<(), 
     };
 
     // If the first parent of the working copy has changed, reset the Git HEAD.
-    let old_head_target = mut_repo.git_head();
+    let old_head_target = mut_repo.git_head_for_workspace(workspace_name);
     if old_head_target != new_head_target {
         let expected_ref = if let Some(id) = old_head_target.as_normal() {
             // We have to check the actual HEAD state because we don't record a
@@ -1496,7 +1549,7 @@ pub fn reset_head(mut_repo: &mut MutableRepo, wc_commit: &Commit) -> Result<(), 
             .map(|id| gix::ObjectId::from_bytes_or_panic(id.as_bytes()));
         update_git_head(&git_repo, expected_ref, new_oid)
             .map_err(|err| GitResetHeadError::UpdateHeadRef(err.into()))?;
-        mut_repo.set_git_head_target(new_head_target);
+        mut_repo.set_git_head_target_for_workspace(workspace_name.to_owned(), new_head_target);
     }
 
     // If there is an ongoing operation (merge, rebase, etc.), we need to clean it

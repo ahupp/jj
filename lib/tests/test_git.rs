@@ -3021,7 +3021,7 @@ fn test_reset_head_with_index_no_conflict() {
 
     // Git index should contain all files from the tree.
     // `Mode(DIR | SYMLINK)` actually means `MODE(COMMIT)`, as in a git submodule.
-    insta::assert_snapshot!(get_index_state(&workspace_root), @r"
+    insta::assert_snapshot!(get_index_state(&workspace_root), @"
     Unconflicted some/dir/commit Mode(DIR | SYMLINK)
     Unconflicted some/dir/executable-file Mode(FILE | FILE_EXECUTABLE)
     Unconflicted some/dir/normal-file Mode(FILE)
@@ -3118,7 +3118,7 @@ fn test_reset_head_with_index_merge_conflict() {
 
     // Index should contain conflicted files from merge of parent commits.
     // `Mode(DIR | SYMLINK)` actually means `MODE(COMMIT)`, as in a git submodule.
-    insta::assert_snapshot!(get_index_state(&workspace_root), @r"
+    insta::assert_snapshot!(get_index_state(&workspace_root), @"
     Base some/dir/commit Mode(DIR | SYMLINK)
     Ours some/dir/commit Mode(DIR | SYMLINK)
     Theirs some/dir/commit Mode(DIR | SYMLINK)
@@ -3560,7 +3560,7 @@ fn test_expand_default_fetch_refspecs() {
         warnings.push('\n');
     }
 
-    insta::assert_snapshot!(warnings, @r"
+    insta::assert_snapshot!(warnings, @"
     fetch-only refspecs are not supported: refs/heads/non-forced
     fetch-only refspecs are not supported: refs/heads/src-only
     only refs/heads/ is supported for refspec sources: ^refs/tags/unsupported

@@ -351,7 +351,7 @@ mod test {
 
         insta::assert_snapshot!(
             collect_collapsed_untracked_files_string(untracked, tracked),
-            @r"
+            @"
         ? untracked_top_level_file
         ? dir/
         ? dir2/c

@@ -953,7 +953,7 @@ Done";
             .map(|s| s.as_bytes().to_owned())
         );
         assert_eq!(output, b"blah blah\nsome error message\n");
-        insta::assert_debug_snapshot!(progress, @r"
+        insta::assert_debug_snapshot!(progress, @"
         [
             Progress {
                 bytes_downloaded: None,

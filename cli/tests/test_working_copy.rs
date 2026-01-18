@@ -29,7 +29,7 @@ fn test_snapshot_large_file() {
     work_dir.write_file("empty", "");
     work_dir.write_file("large", "a lot of text");
     let output = work_dir.run_jj(["file", "list"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     empty
     [EOF]
     ------- stderr -------
@@ -49,7 +49,7 @@ fn test_snapshot_large_file() {
     let big_string = vec![0; 1024 * 11];
     work_dir.write_file("large", &big_string);
     let output = work_dir.run_jj(["file", "list"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     empty
     [EOF]
     ------- stderr -------
@@ -73,7 +73,7 @@ fn test_snapshot_large_file() {
         "track",
         "large2",
     ]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Warning: Refused to snapshot some files:
       large: 11.0KiB (11264 bytes); the maximum size allowed is 10.0KiB (10240 bytes)
@@ -91,7 +91,7 @@ fn test_snapshot_large_file() {
 
     // test invalid configuration
     let output = work_dir.run_jj(["file", "list", "--config=snapshot.max-new-file-size=[]"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Config error: Invalid type or value for snapshot.max-new-file-size
     Caused by: Expected a positive integer or a string in '<number><unit>' form
@@ -102,14 +102,14 @@ fn test_snapshot_large_file() {
 
     // No error if we disable auto-tracking of the path
     let output = work_dir.run_jj(["file", "list", "--config=snapshot.auto-track='none()'"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     empty
     [EOF]
     ");
 
     // max-new-file-size=0 means no limit
     let output = work_dir.run_jj(["file", "list", "--config=snapshot.max-new-file-size=0"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     empty
     large
     large2
@@ -132,7 +132,7 @@ fn test_snapshot_large_file_restore() {
     work_dir.run_jj(["new", "root()"]).success();
     work_dir.write_file("file", "a lot of text");
     let output = work_dir.run_jj(["restore", "--from=subject(committed)"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Warning: Refused to snapshot some files:
       file: 13.0B (13 bytes); the maximum size allowed is 10.0B (10 bytes)
@@ -155,7 +155,7 @@ fn test_snapshot_large_file_restore() {
     // However, the next command will snapshot the large file because it is now
     // tracked. TODO: Should we remember the untracked state?
     let output = work_dir.run_jj(["status"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     Working copy changes:
     A file
     Working copy  (@) : kkmpptxz 09eba65e (no description set)
@@ -269,7 +269,7 @@ fn test_snapshot_invalid_ignore_pattern() {
 
     // Test invalid pattern in .gitignore
     work_dir.write_file(".gitignore", " []\n");
-    insta::assert_snapshot!(work_dir.run_jj(["st"]), @r"
+    insta::assert_snapshot!(work_dir.run_jj(["st"]), @"
     Working copy changes:
     A .gitignore
     Working copy  (@) : qpvuntsm c9cf4826 (no description set)
@@ -279,7 +279,7 @@ fn test_snapshot_invalid_ignore_pattern() {
 
     // Test invalid UTF-8 in .gitignore
     work_dir.write_file(".gitignore", b"\xff\n");
-    insta::assert_snapshot!(work_dir.run_jj(["st"]), @r"
+    insta::assert_snapshot!(work_dir.run_jj(["st"]), @"
     ------- stderr -------
     Internal error: Failed to snapshot the working copy
     Caused by:
@@ -361,7 +361,7 @@ fn test_conflict_marker_length_stored_in_working_copy() {
     // Working copy should contain conflict marker length
     let output = work_dir.run_jj(["debug", "local-working-copy"]);
     insta::assert_snapshot!(output.normalize_stdout_with(redact_output), @r#"
-    Current operation: OperationId("5d919506f1cbd90a43ce93d739d84c0d7de34bc6eeb934befad2c3a16e2fe635c548ced178e42dde1041e140d7296a7000bc38530f1cfd7ed93a23cfc1e81699")
+    Current operation: OperationId("e0efab06737fc29a35987a9e65b93e58164a3bc44a4db89fa67538fc99ca84ae406e65b9b09e1775d8af75a47cc57317db411eb8dd275078117f57e946801592")
     Current tree: MergedTree { tree_ids: Conflicted([TreeId("381273b50cf73f8c81b3f1502ee89e9bbd6c1518"), TreeId("771f3d31c4588ea40a8864b2a981749888e596c2"), TreeId("f56b8223da0dab22b03b8323ced4946329aeb4e0")]), labels: Labeled(["rlvkpnrz ccf9527c \"side-a\"", "qpvuntsm 2205b3ac \"base\"", "zsuskuln d7acaf48 \"side-b\""]), .. }
     Normal { exec_bit: ExecBit(false) }           313 <timestamp> Some(MaterializedConflictData { conflict_marker_len: 11 }) "file"
     [EOF]
@@ -392,7 +392,7 @@ fn test_conflict_marker_length_stored_in_working_copy() {
 
     // The file should still be conflicted, and the new content should be saved
     let output = work_dir.run_jj(["st"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     Working copy changes:
     M file
     Working copy  (@) : mzvwutvl 0e1653f0 (conflict) (no description set)
@@ -424,7 +424,7 @@ fn test_conflict_marker_length_stored_in_working_copy() {
     // Working copy should still contain conflict marker length
     let output = work_dir.run_jj(["debug", "local-working-copy"]);
     insta::assert_snapshot!(output.normalize_stdout_with(redact_output), @r#"
-    Current operation: OperationId("519e354ba030d15583d3e62196b84337d5c446b632b5f92e98c6af246978ca8b166185a2526c48f51b4c2ca423503d3a8636fccefe7eec5ac0a8ab44061ae4a3")
+    Current operation: OperationId("8975cceb4464fff9ea74300bc211c748ef8a25fff546570e0367efec5608b14b17401c30fa80b5aa3f53bba01521a7f43ae914882ef3032647393f7978d40c6a")
     Current tree: MergedTree { tree_ids: Conflicted([TreeId("381273b50cf73f8c81b3f1502ee89e9bbd6c1518"), TreeId("771f3d31c4588ea40a8864b2a981749888e596c2"), TreeId("3329c18c95f7b7a55c278c2259e9c4ce711fae59")]), labels: Labeled(["rlvkpnrz ccf9527c \"side-a\"", "qpvuntsm 2205b3ac \"base\"", "zsuskuln d7acaf48 \"side-b\""]), .. }
     Normal { exec_bit: ExecBit(false) }           274 <timestamp> Some(MaterializedConflictData { conflict_marker_len: 11 }) "file"
     [EOF]
@@ -446,7 +446,7 @@ fn test_conflict_marker_length_stored_in_working_copy() {
     );
 
     let output = work_dir.run_jj(["st"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     Working copy changes:
     M file
     Working copy  (@) : mzvwutvl 469d479f (no description set)
@@ -459,7 +459,7 @@ fn test_conflict_marker_length_stored_in_working_copy() {
     // working copy
     let output = work_dir.run_jj(["debug", "local-working-copy"]);
     insta::assert_snapshot!(output.normalize_stdout_with(redact_output), @r#"
-    Current operation: OperationId("20e0a52b5cb37d14c675e24cf1325cbe2d145b8369ef17b78b7ae5b0a77177c03585d840469732c98d6b1d528309db873f0a52b3b42e67b7440d9a8c644f5667")
+    Current operation: OperationId("e48514c511d9aeadb9e2a1b59a6962a7573547cc072ea5fc97678cfaaabfa6732a6d070da6807779b477d59efdfe4f6dc04d60fe4791eabdcecace4c40f9d3df")
     Current tree: MergedTree { tree_ids: Resolved(TreeId("6120567b3cb2472d549753ed3e4b84183d52a650")), labels: Unlabeled, .. }
     Normal { exec_bit: ExecBit(false) }           130 <timestamp> None "file"
     [EOF]
@@ -499,7 +499,7 @@ fn test_submodule_ignored() {
         &format!("{}/submodule", test_env.env_root().display()),
         "sub",
     ]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Cloning into '$TEST_ENV/repo/sub'...
     done.

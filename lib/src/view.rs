@@ -97,8 +97,22 @@ impl View {
         &self.data.git_refs
     }
 
+    pub fn git_heads(&self) -> &BTreeMap<WorkspaceNameBuf, RefTarget> {
+        &self.data.git_heads
+    }
+
     pub fn git_head(&self) -> &RefTarget {
         &self.data.git_head
+    }
+
+    pub fn git_head_for_workspace(&self, name: &WorkspaceName) -> RefTarget {
+        if let Some(target) = self.data.git_heads.get(name) {
+            return target.clone();
+        }
+        if self.data.git_heads.is_empty() && name == WorkspaceName::DEFAULT {
+            return self.data.git_head.clone();
+        }
+        RefTarget::absent()
     }
 
     pub fn set_wc_commit(&mut self, name: WorkspaceNameBuf, commit_id: CommitId) {
@@ -107,6 +121,7 @@ impl View {
 
     pub fn remove_wc_commit(&mut self, name: &WorkspaceName) {
         self.data.wc_commit_ids.remove(name);
+        self.data.git_heads.remove(name);
     }
 
     pub fn rename_workspace(
@@ -124,7 +139,12 @@ impl View {
                 name: old_name.to_owned(),
             }
         })?;
-        self.data.wc_commit_ids.insert(new_name, wc_commit_id);
+        self.data
+            .wc_commit_ids
+            .insert(new_name.clone(), wc_commit_id);
+        if let Some(target) = self.data.git_heads.remove(old_name) {
+            self.data.git_heads.insert(new_name, target);
+        }
         Ok(())
     }
 
@@ -510,6 +530,33 @@ impl View {
     /// reference will be cleared.
     pub fn set_git_head_target(&mut self, target: RefTarget) {
         self.data.git_head = target;
+        if self.data.git_head.is_present() {
+            self.data
+                .git_heads
+                .insert(WorkspaceName::DEFAULT.to_owned(), self.data.git_head.clone());
+        } else {
+            self.data.git_heads.remove(WorkspaceName::DEFAULT);
+        }
+    }
+
+    /// Sets Git HEAD for the specified workspace. If the target is absent, the
+    /// reference will be cleared.
+    pub fn set_git_head_target_for_workspace(
+        &mut self,
+        name: WorkspaceNameBuf,
+        target: RefTarget,
+    ) {
+        if target.is_present() {
+            if name == WorkspaceName::DEFAULT {
+                self.data.git_head = target.clone();
+            }
+            self.data.git_heads.insert(name, target);
+        } else {
+            if name == WorkspaceName::DEFAULT {
+                self.data.git_head = RefTarget::absent();
+            }
+            self.data.git_heads.remove(&name);
+        }
     }
 
     /// Iterates all commit ids referenced by this view.
@@ -535,6 +582,7 @@ impl View {
             local_tags,
             remote_views,
             git_refs,
+            git_heads,
             git_head,
             wc_commit_ids,
         } = &self.data;
@@ -548,6 +596,7 @@ impl View {
                     .flat_map(|remote_ref| ref_target_ids(&remote_ref.target))
             }),
             git_refs.values().flat_map(ref_target_ids),
+            git_heads.values().flat_map(ref_target_ids),
             ref_target_ids(git_head),
             wc_commit_ids.values()
         )

@@ -844,7 +844,7 @@ mod tests {
             writeln!(formatter).unwrap();
         }
         drop(formatter);
-        insta::assert_snapshot!(to_snapshot_string(output), @r"
+        insta::assert_snapshot!(to_snapshot_string(output), @"
         [38;5;0m black [39m
         [38;5;1m red [39m
         [38;5;2m green [39m
@@ -906,7 +906,7 @@ mod tests {
         formatter.pop_label();
         writeln!(formatter).unwrap();
         drop(formatter);
-        insta::assert_snapshot!(to_snapshot_string(output), @r"
+        insta::assert_snapshot!(to_snapshot_string(output), @"
         [38;5;15m[48;5;93m purple background [39m[49m
         [38;5;244m gray [39m
         [EOF]
@@ -932,7 +932,7 @@ mod tests {
             writeln!(formatter).unwrap();
         }
         drop(formatter);
-        insta::assert_snapshot!(to_snapshot_string(output), @r"
+        insta::assert_snapshot!(to_snapshot_string(output), @"
         [38;2;0;0;0m black [39m
         [38;2;255;255;255m white [39m
         [38;2;175;224;217m pastel-blue [39m
@@ -1018,7 +1018,7 @@ mod tests {
         formatter.pop_label();
         writeln!(formatter).unwrap();
         drop(formatter);
-        insta::assert_snapshot!(to_snapshot_string(output), @r"
+        insta::assert_snapshot!(to_snapshot_string(output), @"
         [38;5;1m fg only [39m
         [48;5;4m bg only [49m
         [1m bold only [0m
@@ -1284,7 +1284,7 @@ mod tests {
         let config = config_from_string("colors.foo = { bold = 1 }");
         let err = ColorFormatter::for_config(&mut Vec::new(), &config, false).unwrap_err();
         insta::assert_snapshot!(err, @"Invalid type or value for colors.foo");
-        insta::assert_snapshot!(err.source().unwrap(), @r"
+        insta::assert_snapshot!(err.source().unwrap(), @"
         invalid type: integer `1`, expected a boolean
         in `bold`
         ");
@@ -1314,7 +1314,7 @@ mod tests {
         formatter.pop_label();
         write!(formatter, " and back.").unwrap();
         drop(formatter);
-        insta::assert_snapshot!(to_snapshot_string(output), @r"
+        insta::assert_snapshot!(to_snapshot_string(output), @"
         [38;5;4m[48;5;3mBlue on yellow, [39m default fg, [38;5;4m and back.[39m[49m
         [38;5;4m[48;5;3mBlue on yellow, [49m default bg, [48;5;3m and back.[39m[49m[EOF]
         ");
@@ -1442,7 +1442,7 @@ mod tests {
         writeln!(formatter.labeled("outer").labeled("inner"), "outer-inner").unwrap();
         writeln!(formatter.labeled("inner"), "inner").unwrap();
         drop(formatter);
-        insta::assert_snapshot!(to_snapshot_string(output), @r"
+        insta::assert_snapshot!(to_snapshot_string(output), @"
         [38;5;4mouter[39m
         [38;5;2mouter-inner[39m
         [38;5;1minner[39m
@@ -1466,7 +1466,7 @@ mod tests {
         writeln!(writer, " continues").unwrap();
         drop(writer);
         drop(formatter);
-        insta::assert_snapshot!(to_snapshot_string(output), @r"
+        insta::assert_snapshot!(to_snapshot_string(output), @"
         [38;5;1mHeading: [38;5;2mMessage continues[39m
         [EOF]
         ");

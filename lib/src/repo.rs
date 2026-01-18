@@ -1815,12 +1815,34 @@ impl MutableRepo {
         Ok(())
     }
 
+    fn merge_git_head(
+        &mut self,
+        name: &WorkspaceName,
+        base_target: &RefTarget,
+        other_target: &RefTarget,
+    ) -> IndexResult<()> {
+        let view = self.view.get_mut();
+        let index = self.index.as_index();
+        let self_target = view.git_head_for_workspace(name);
+        let new_target = merge_ref_targets(index, &self_target, base_target, other_target)?;
+        view.set_git_head_target_for_workspace(name.to_owned(), new_target);
+        Ok(())
+    }
+
     pub fn git_head(&self) -> RefTarget {
         self.view.with_ref(|v| v.git_head().clone())
     }
 
     pub fn set_git_head_target(&mut self, target: RefTarget) {
         self.view_mut().set_git_head_target(target);
+    }
+
+    pub fn git_head_for_workspace(&self, name: &WorkspaceName) -> RefTarget {
+        self.view.with_ref(|v| v.git_head_for_workspace(name))
+    }
+
+    pub fn set_git_head_target_for_workspace(&mut self, name: WorkspaceNameBuf, target: RefTarget) {
+        self.view_mut().set_git_head_target_for_workspace(name, target);
     }
 
     pub fn set_view(&mut self, data: op_store::View) {
@@ -1894,6 +1916,11 @@ impl MutableRepo {
         let changed_git_refs = diff_named_ref_targets(base.git_refs(), other.git_refs());
         for (name, (base_target, other_target)) in changed_git_refs {
             self.merge_git_ref(name, base_target, other_target)?;
+        }
+
+        let changed_git_heads = diff_named_ref_targets(base.git_heads(), other.git_heads());
+        for (name, (base_target, other_target)) in changed_git_heads {
+            self.merge_git_head(name.as_ref(), base_target, other_target)?;
         }
 
         let changed_remote_bookmarks =

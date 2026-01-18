@@ -50,7 +50,7 @@ fn test_gc_args() {
     insta::assert_snapshot!(output, @"");
 
     let output = work_dir.run_jj(["util", "gc", "--at-op=@-"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Error: Cannot garbage collect from a non-head operation
     [EOF]
@@ -58,7 +58,7 @@ fn test_gc_args() {
     ");
 
     let output = work_dir.run_jj(["util", "gc", "--expire=foobar"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Error: --expire only accepts 'now'
     [EOF]
@@ -94,12 +94,12 @@ fn test_gc_operation_log() {
 
     // Now this doesn't work.
     let output = work_dir.run_jj(["debug", "object", "operation", &op_to_remove]);
-    insta::assert_snapshot!(output.strip_stderr_last_line(), @r"
+    insta::assert_snapshot!(output.strip_stderr_last_line(), @"
     ------- stderr -------
     Internal error: Failed to load an operation
     Caused by:
-    1: Object b50d0a8f111a9d30d45d429d62c8e54016cc7c891706921a6493756c8074e883671cf3dac0ac9f94ef0fa8c79738a3dfe38c3e1f6c5e1a4a4d0857d266ef2040 of type operation not found
-    2: Cannot access $TEST_ENV/repo/.jj/repo/op_store/operations/b50d0a8f111a9d30d45d429d62c8e54016cc7c891706921a6493756c8074e883671cf3dac0ac9f94ef0fa8c79738a3dfe38c3e1f6c5e1a4a4d0857d266ef2040
+    1: Object 6c63e4b57aeba908a150495c0d8ccd2663d3b49568559e8388d5682b7707eaeece82ddb6620722c35e4f106f0401b2f2c9411bc74ac89aef9af2304ac8023f79 of type operation not found
+    2: Cannot access $TEST_ENV/repo/.jj/repo/op_store/operations/6c63e4b57aeba908a150495c0d8ccd2663d3b49568559e8388d5682b7707eaeece82ddb6620722c35e4f106f0401b2f2c9411bc74ac89aef9af2304ac8023f79
     [EOF]
     [exit status: 255]
     ");
@@ -163,7 +163,7 @@ fn test_util_exec_fail() {
         ],
     );
     // Ensures only stdout contains text
-    insta::assert_snapshot!(output.normalize_stderr_with(|s| s.replace(".exe", "")), @r"
+    insta::assert_snapshot!(output.normalize_stderr_with(|s| s.replace(".exe", "")), @"
     ------- stderr -------
     error: unexpected argument '--badopt' found
 
@@ -181,7 +181,7 @@ fn test_util_exec_fail() {
 fn test_util_exec_not_found() {
     let test_env = TestEnvironment::default();
     let output = test_env.run_jj_in(".", ["util", "exec", "--", "jj-test-missing-program"]);
-    insta::assert_snapshot!(output.strip_stderr_last_line(), @r"
+    insta::assert_snapshot!(output.strip_stderr_last_line(), @"
     ------- stderr -------
     Error: Failed to execute external command 'jj-test-missing-program'
     [EOF]
@@ -207,7 +207,7 @@ fn test_util_exec_crash() {
     if cfg!(unix) {
         // abort produces SIGABRT; strip any "(core dumped)" string
         let output = output.normalize_stderr_with(|s| s.replacen(" (core dumped)", "", 1));
-        insta::assert_snapshot!(output, @r"
+        insta::assert_snapshot!(output, @"
         ------- stderr -------
         Error: External command was terminated by signal: 6 (SIGABRT)
         [EOF]
@@ -239,7 +239,7 @@ fn test_util_exec_sets_env() {
             r#"echo "$JJ_WORKSPACE_ROOT""#,
         ],
     );
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     $TEST_ENV/repo
     [EOF]
     ");

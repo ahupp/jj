@@ -71,8 +71,7 @@ pub fn cmd_git_colocation(
 }
 
 /// Check that the repository supports colocation commands
-/// which means that the repo is backed by git, is not
-/// already colocated, and is a main workspace
+/// which means that the repo is backed by git and is a main workspace
 fn workspace_supports_git_colocation_commands(
     workspace_command: &crate::cli_util::WorkspaceCommandHelper,
 ) -> Result<(), CommandError> {
@@ -96,12 +95,14 @@ fn cmd_git_colocation_status(
 ) -> Result<(), CommandError> {
     let workspace_command = command.workspace_helper(ui)?;
 
-    // Make sure that the workspace supports git colocation commands
-    workspace_supports_git_colocation_commands(&workspace_command)?;
+    // Ensure that this is a Git-backed repository.
+    git::get_git_backend(workspace_command.repo().store())?;
 
     let repo = workspace_command.repo();
     let is_colocated = is_colocated_git_workspace(workspace_command.workspace(), repo);
-    let git_head = repo.view().git_head();
+    let git_head = repo
+        .view()
+        .git_head_for_workspace(workspace_command.workspace_name());
 
     if is_colocated {
         writeln!(ui.stdout(), "Workspace is currently colocated with Git.")?;
@@ -127,15 +128,27 @@ fn cmd_git_colocation_status(
             .join(", ")
     )?;
 
-    if is_colocated {
-        writeln!(
-            ui.hint_default(),
-            "To disable colocation, run: `jj git colocation disable`"
-        )?;
+    let is_main_workspace = !workspace_command
+        .workspace_root()
+        .join(".jj")
+        .join("repo")
+        .is_file();
+    if is_main_workspace {
+        if is_colocated {
+            writeln!(
+                ui.hint_default(),
+                "To disable colocation, run: `jj git colocation disable`"
+            )?;
+        } else {
+            writeln!(
+                ui.hint_default(),
+                "To enable colocation, run: `jj git colocation enable`"
+            )?;
+        }
     } else {
         writeln!(
             ui.hint_default(),
-            "To enable colocation, run: `jj git colocation enable`"
+            "To change colocation settings, run this command in the main workspace."
         )?;
     }
 
@@ -298,8 +311,15 @@ fn set_git_head_to_wc_parent(
     workspace_command: &mut crate::cli_util::WorkspaceCommandHelper,
     wc_commit: &Commit,
 ) -> Result<(), CommandError> {
+    let workspace_name = workspace_command.workspace_name().to_owned();
+    let git_repo = crate::git_util::open_git_repo_for_workspace(workspace_command.workspace())?;
     let mut tx = workspace_command.start_transaction();
-    git::reset_head(tx.repo_mut(), wc_commit)?;
+    git::reset_head_with_repo(
+        tx.repo_mut(),
+        &workspace_name,
+        &git_repo,
+        wc_commit,
+    )?;
     if tx.repo().has_changes() {
         tx.finish(ui, "set git head to working copy parent")?;
     }
@@ -311,8 +331,12 @@ fn remove_git_head(
     ui: &mut Ui,
     workspace_command: &mut crate::cli_util::WorkspaceCommandHelper,
 ) -> Result<(), CommandError> {
+    let workspace_name = workspace_command.workspace_name().to_owned();
     let mut tx = workspace_command.start_transaction();
-    tx.repo_mut().set_git_head_target(RefTarget::absent());
+    tx.repo_mut().set_git_head_target_for_workspace(
+        workspace_name,
+        RefTarget::absent(),
+    );
     if tx.repo().has_changes() {
         tx.finish(ui, "remove git head reference")?;
     }

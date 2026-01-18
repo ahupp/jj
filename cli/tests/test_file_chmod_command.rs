@@ -68,7 +68,7 @@ fn test_chmod_regular_conflict() {
     create_commit_with_files(&work_dir, "conflict", &["x", "n"], &[]);
 
     // Test the setup
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @    conflict
     ├─╮
     │ ○  n
@@ -136,7 +136,7 @@ fn test_chmod_regular_conflict() {
 
     // Unmatched paths should generate warnings
     let output = work_dir.run_jj(["file", "chmod", "x", "nonexistent", "file"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Warning: No matching entries for paths: nonexistent
     Working copy  (@) now at: yostqsxw e9f9b6bd conflict | (conflict) conflict
@@ -162,7 +162,7 @@ fn test_chmod_nonfile() {
 
     symlink_file("target", work_dir.root().join("symlink")).unwrap();
     let output = work_dir.run_jj(["show"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     Commit ID: 82976318a088d30054540d1a11ffb4c79fb5d47e
     Change ID: qpvuntsmwlqtpsluzzsnyyzlmlwvmlnu
     Author   : Test User <test.user@example.com> (2001-02-03 08:05:08)
@@ -176,7 +176,7 @@ fn test_chmod_nonfile() {
     ");
 
     let output = work_dir.run_jj(["file", "chmod", "n", "symlink"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Error: Found neither a file nor a conflict at 'symlink'.
     [EOF]
@@ -208,7 +208,7 @@ fn test_chmod_file_dir_deletion_conflicts() {
     // Create a file-dir conflict and a file-deletion conflict
     create_commit_with_files(&work_dir, "file_dir", &["file", "dir"], &[]);
     create_commit_with_files(&work_dir, "file_deletion", &["file", "deletion"], &[]);
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @    file_deletion
     ├─╮
     │ ○  deletion
@@ -238,7 +238,7 @@ fn test_chmod_file_dir_deletion_conflicts() {
     [EOF]
     "#);
     let output = work_dir.run_jj(["file", "chmod", "x", "file", "-r=file_dir"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Error: Some of the sides of the conflict are not files at 'file'.
     [EOF]
@@ -263,7 +263,7 @@ fn test_chmod_file_dir_deletion_conflicts() {
     [EOF]
     "#);
     let output = work_dir.run_jj(["file", "chmod", "x", "file", "-r=file_deletion"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Working copy  (@) now at: kmkuslsw 0b9a6da5 file_deletion | (conflict) file_deletion
     Parent commit (@-)      : zsuskuln bc9cdea1 file | file
@@ -321,7 +321,7 @@ fn test_chmod_exec_bit_settings() {
 
     let output = work_dir.run_jj(["debug", "local-working-copy"]);
     insta::assert_snapshot!(output.normalize_stdout_with(redact_timestamp), @r#"
-    Current operation: OperationId("8c58a72d1118aa7d8b1295949a7fa8c6fcda63a3c89813faf2b8ca599ceebf8adcfcbeb8f0bbb6439c86b47dd68b9cf85074c9e57214c3fb4b632e0c9e87ad65")
+    Current operation: OperationId("b2ad9466e5e8a563e852af3983982a8a9b89492fb99077c73e3cb80558af120e9244b8ee3ff2dc599917deee262ead7b1177485a10b93f4c2973a8e622cefa22")
     Current tree: MergedTree { tree_ids: Resolved(TreeId("6d5f482d15035cdd7733b1b551d1fead28d22592")), labels: Unlabeled, .. }
     Normal { exec_bit: ExecBit(false) }             5 <timestamp> None "file"
     [EOF]
@@ -334,7 +334,7 @@ fn test_chmod_exec_bit_settings() {
     set_file_executable(path, true);
     let output = work_dir.run_jj(["debug", "local-working-copy"]);
     insta::assert_snapshot!(output.normalize_stdout_with(redact_timestamp), @r#"
-    Current operation: OperationId("3a6a78820e6892164ed55680b92fa679fbb4d6acd4135c7413d1b815bedcd2c24c85ac8f4f96c96f76012f33d31ffbf50473b938feadf36fcd9c92997789aeca")
+    Current operation: OperationId("5e9a9551fa1676e01c39c7652d2e443d0ff144f4f742818730a9228ee33c121bf7ca69bd575c9cbfa4b6933f71d35b2680eed9da0477d668f1d180eacbb787a6")
     Current tree: MergedTree { tree_ids: Resolved(TreeId("5201dbafb66dc1b28b029a262e1b206f6f93df1e")), labels: Unlabeled, .. }
     Normal { exec_bit: ExecBit(true) }             5 <timestamp> None "file"
     [EOF]
@@ -356,7 +356,7 @@ fn test_chmod_exec_bit_settings() {
     assert_file_executable(path, true);
     let output = work_dir.run_jj(["debug", "local-working-copy"]);
     insta::assert_snapshot!(output.normalize_stdout_with(redact_timestamp), @r#"
-    Current operation: OperationId("cab1801e16b54d5b413f638bdf74388520b51232c88db6b314ef64b054607ab82ae6ef0b1f707b52aa8d2131511f6f48f8ca52e465621ff38c442b0ec893f309")
+    Current operation: OperationId("6157f41b76504c775623357f916e0adc87910016568394e6fc6d78dadda6d3e4e9fbdb7b0ec3ac38372c206432e41a88b956b4c963a3b94d744ef93f26b22435")
     Current tree: MergedTree { tree_ids: Resolved(TreeId("6d5f482d15035cdd7733b1b551d1fead28d22592")), labels: Unlabeled, .. }
     Normal { exec_bit: ExecBit(true) }             5 <timestamp> None "file"
     [EOF]
@@ -367,7 +367,7 @@ fn test_chmod_exec_bit_settings() {
     assert_file_executable(path, false);
     let output = work_dir.run_jj(["debug", "local-working-copy"]);
     insta::assert_snapshot!(output.normalize_stdout_with(redact_timestamp), @r#"
-    Current operation: OperationId("def8ce6211dcff6d2784d5309d36079c1cb6eeb70821ae144982c76d38ed76fedc8b84e4daddaac70f6a0aae1c301ff5b60e1baa6ac371dabd77cec3537d2c39")
+    Current operation: OperationId("6e043887d70082ac73d833bb716a951daf400432dad0e10e85482584d0dad0738608c43f12470733c9e4c01aa49810514c8d616f6240681de2ccbda5d1365e3d")
     Current tree: MergedTree { tree_ids: Resolved(TreeId("5201dbafb66dc1b28b029a262e1b206f6f93df1e")), labels: Unlabeled, .. }
     Normal { exec_bit: ExecBit(false) }             5 <timestamp> None "file"
     [EOF]
@@ -379,7 +379,7 @@ fn test_chmod_exec_bit_settings() {
 
     assert_file_executable(path, false);
     let output = work_dir.run_jj(["status"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     Working copy changes:
     M file
     Working copy  (@) : znkkpsqq 71681768 ignore | ignore
@@ -387,7 +387,7 @@ fn test_chmod_exec_bit_settings() {
     [EOF]
     ");
     let output = work_dir.run_jj(["file", "chmod", "x", "file"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Working copy  (@) now at: znkkpsqq ef0a25b6 ignore | ignore
     Parent commit (@-)      : rlvkpnrz 1792382a base | base
@@ -400,7 +400,7 @@ fn test_chmod_exec_bit_settings() {
     set_file_executable(path, true);
     let output = work_dir.run_jj(["debug", "local-working-copy"]);
     insta::assert_snapshot!(output.normalize_stdout_with(redact_timestamp), @r#"
-    Current operation: OperationId("0cce4e44f0b47cc4404f74fe164536aa57f67b8981726ce6ec88c39d79e266a2586a79d51a065906b6d8b284b39fe0ab023547f65571d1b61a97916f7f7cf4d8")
+    Current operation: OperationId("71bc478b54fcaa2df36e24bb606eab38e8b6332499cf3fb4756b248a2fb03ded0235c15966bfae45a634699d33c569d724a8fdc0d694b476aa7d8be2523c1904")
     Current tree: MergedTree { tree_ids: Resolved(TreeId("5201dbafb66dc1b28b029a262e1b206f6f93df1e")), labels: Unlabeled, .. }
     Normal { exec_bit: ExecBit(true) }             5 <timestamp> None "file"
     [EOF]
@@ -460,7 +460,7 @@ fn test_chmod_exec_bit_ignore_then_respect() {
 
     // Set the in-repo executable bit to true.
     let output = work_dir.run_jj(["file", "chmod", "x", "file"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Working copy  (@) now at: rlvkpnrz cb3f99cb base | base
     Parent commit (@-)      : zzzzzzzz 00000000 (empty) (no description set)
@@ -474,7 +474,7 @@ fn test_chmod_exec_bit_ignore_then_respect() {
 
     // This simultaneously snapshots and updates the executable bit.
     let output = work_dir.run_jj(["file", "chmod", "x", "file"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Working copy  (@) now at: rlvkpnrz 96872a96 base | base
     Parent commit (@-)      : zzzzzzzz 00000000 (empty) (no description set)

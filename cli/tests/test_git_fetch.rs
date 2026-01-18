@@ -121,7 +121,7 @@ fn test_git_fetch_with_default_config() {
     add_git_remote(&test_env, &work_dir, "origin");
 
     work_dir.run_jj(["git", "fetch"]).success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     origin@origin: qmyrypzk ab8b299e message
     [EOF]
     ");
@@ -136,7 +136,7 @@ fn test_git_fetch_default_remote() {
     add_git_remote(&test_env, &work_dir, "origin");
 
     work_dir.run_jj(["git", "fetch"]).success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     origin: qmyrypzk ab8b299e message
       @origin: qmyrypzk ab8b299e message
     [EOF]
@@ -152,13 +152,13 @@ fn test_git_fetch_single_remote() {
     add_git_remote(&test_env, &work_dir, "rem1");
 
     let output = work_dir.run_jj(["git", "fetch"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Hint: Fetching from the only existing remote: rem1
     bookmark: rem1@rem1 [new] tracked
     [EOF]
     ");
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     rem1: ppspxspk 4acd0343 message
       @rem1: ppspxspk 4acd0343 message
     [EOF]
@@ -174,7 +174,7 @@ fn test_git_fetch_single_remote_all_remotes_flag() {
     add_git_remote(&test_env, &work_dir, "rem1");
 
     work_dir.run_jj(["git", "fetch", "--all-remotes"]).success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     rem1: ppspxspk 4acd0343 message
       @rem1: ppspxspk 4acd0343 message
     [EOF]
@@ -192,7 +192,7 @@ fn test_git_fetch_single_remote_from_arg() {
     work_dir
         .run_jj(["git", "fetch", "--remote", "rem1"])
         .success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     rem1: ppspxspk 4acd0343 message
       @rem1: ppspxspk 4acd0343 message
     [EOF]
@@ -209,7 +209,7 @@ fn test_git_fetch_single_remote_from_config() {
     test_env.add_config(r#"git.fetch = "rem1""#);
 
     work_dir.run_jj(["git", "fetch"]).success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     rem1: ppspxspk 4acd0343 message
       @rem1: ppspxspk 4acd0343 message
     [EOF]
@@ -229,7 +229,7 @@ fn test_git_fetch_multiple_remotes() {
     work_dir
         .run_jj(["git", "fetch", "--remote", "rem1", "--remote", "rem2"])
         .success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     rem1: ppspxspk 4acd0343 message
       @rem1: ppspxspk 4acd0343 message
     rem2: pzqqpnpo 44c57802 message
@@ -271,7 +271,7 @@ fn test_git_fetch_with_ignored_refspecs() {
 
     // Should fetch "main" and "sub/yes" by default
     let output = work_dir.run_jj(["git", "fetch"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Warning: Ignored refspec `refs/heads/bar` from `origin`: fetch-only refspecs are not supported
     Warning: Ignored refspec `+refs/heads/bar*:refs/tags/bar*` from `origin`: only refs/remotes/ is supported for fetch destinations
@@ -280,7 +280,7 @@ fn test_git_fetch_with_ignored_refspecs() {
     bookmark: sub/yes@origin [new] untracked
     [EOF]
     ");
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     main@origin: wlltxvop a437242b main
     sub/yes@origin: xwxtqxvy 6b64b005 sub/yes
     [EOF]
@@ -288,12 +288,12 @@ fn test_git_fetch_with_ignored_refspecs() {
 
     // Can fetch ignored "sub/no" explicitly
     let output = work_dir.run_jj(["git", "fetch", "--branch=sub/no"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: sub/no@origin [new] untracked
     [EOF]
     ");
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     main@origin: wlltxvop a437242b main
     sub/no@origin: tknwmolt f7d8b914 sub/no
     sub/yes@origin: xwxtqxvy 6b64b005 sub/yes
@@ -304,7 +304,7 @@ fn test_git_fetch_with_ignored_refspecs() {
     work_dir
         .run_jj(["bookmark", "forget", "--include-remotes", "sub/no"])
         .success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     main@origin: wlltxvop a437242b main
     sub/yes@origin: xwxtqxvy 6b64b005 sub/yes
     [EOF]
@@ -312,7 +312,7 @@ fn test_git_fetch_with_ignored_refspecs() {
 
     // Should not import "sub/no" because it is ignored by default
     let output = work_dir.run_jj(["git", "fetch"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Warning: Ignored refspec `refs/heads/bar` from `origin`: fetch-only refspecs are not supported
     Warning: Ignored refspec `+refs/heads/bar*:refs/tags/bar*` from `origin`: only refs/remotes/ is supported for fetch destinations
@@ -320,7 +320,7 @@ fn test_git_fetch_with_ignored_refspecs() {
     Nothing changed.
     [EOF]
     ");
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     main@origin: wlltxvop a437242b main
     sub/yes@origin: xwxtqxvy 6b64b005 sub/yes
     [EOF]
@@ -336,7 +336,7 @@ fn test_git_fetch_with_glob() {
     add_git_remote(&test_env, &work_dir, "rem2");
 
     let output = work_dir.run_jj(["git", "fetch", "--remote", "*"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: rem1@rem1 [new] untracked
     bookmark: rem2@rem2 [new] untracked
@@ -356,7 +356,7 @@ fn test_git_fetch_with_glob_and_exact_match() {
     add_git_remote(&test_env, &work_dir, "origin");
 
     let output = work_dir.run_jj(["git", "fetch", "--remote=rem*", "--remote=origin"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: origin@origin [new] untracked
     bookmark: rem1@rem1     [new] untracked
@@ -376,7 +376,7 @@ fn test_git_fetch_with_glob_from_config() {
     add_git_remote(&test_env, &work_dir, "upstream");
 
     let output = work_dir.run_jj(["git", "fetch"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: rem1@rem1 [new] untracked
     bookmark: rem2@rem2 [new] untracked
@@ -392,7 +392,7 @@ fn test_git_fetch_with_glob_with_no_matching_remotes() {
     add_git_remote(&test_env, &work_dir, "upstream");
 
     let output = work_dir.run_jj(["git", "fetch", "--remote=rem*"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Error: No git remotes to fetch from
     [EOF]
@@ -421,7 +421,7 @@ fn test_git_fetch_all_remotes() {
         .success();
 
     work_dir.run_jj(["git", "fetch", "--all-remotes"]).success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     rem1: ppspxspk 4acd0343 message
       @rem1: ppspxspk 4acd0343 message
     rem2: pzqqpnpo 44c57802 message
@@ -442,7 +442,7 @@ fn test_git_fetch_multiple_remotes_from_config() {
     test_env.add_config(r#"git.fetch = ["rem1", "rem2"]"#);
 
     work_dir.run_jj(["git", "fetch"]).success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     rem1: ppspxspk 4acd0343 message
       @rem1: ppspxspk 4acd0343 message
     rem2: pzqqpnpo 44c57802 message
@@ -458,7 +458,7 @@ fn test_git_fetch_no_matching_remote() {
     let work_dir = test_env.work_dir("repo");
 
     let output = work_dir.run_jj(["git", "fetch", "--remote", "rem1"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Warning: No matching remotes for names: rem1
     Error: No git remotes to fetch from
@@ -467,7 +467,7 @@ fn test_git_fetch_no_matching_remote() {
     ");
 
     let output = work_dir.run_jj(["git", "fetch", "--remote=rem1", "--remote=rem2"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Warning: No matching remotes for names: rem1, rem2
     Error: No git remotes to fetch from
@@ -486,13 +486,13 @@ fn test_git_fetch_nonexistent_remote() {
     add_git_remote(&test_env, &work_dir, "rem1");
 
     let output = work_dir.run_jj(["git", "fetch", "--remote", "rem1", "--remote", "rem2"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Warning: No matching remotes for names: rem2
     bookmark: rem1@rem1 [new] untracked
     [EOF]
     ");
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     rem1@rem1: ppspxspk 4acd0343 message
     [EOF]
     ");
@@ -507,13 +507,13 @@ fn test_git_fetch_nonexistent_remote_from_config() {
     test_env.add_config(r#"git.fetch = ["rem1", "rem2"]"#);
 
     let output = work_dir.run_jj(["git", "fetch"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Warning: No matching remotes for names: rem2
     bookmark: rem1@rem1 [new] untracked
     [EOF]
     ");
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     rem1@rem1: ppspxspk 4acd0343 message
     [EOF]
     ");
@@ -534,7 +534,7 @@ fn test_git_fetch_from_remote_named_git() {
 
     // Try fetching from the remote named 'git'.
     let output = work_dir.run_jj(["git", "fetch", "--remote=git"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Error: Git remote named 'git' is reserved for local Git repository
     Hint: Run `jj git remote rename` to give a different name.
@@ -547,7 +547,7 @@ fn test_git_fetch_from_remote_named_git() {
 
     // Implicit import shouldn't fail because of the remote ref.
     let output = work_dir.run_jj(["bookmark", "list", "--all-remotes"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Warning: Failed to import some Git refs:
       refs/remotes/git/git
@@ -574,7 +574,7 @@ fn test_git_fetch_from_remote_named_git() {
         .run_jj(["git", "remote", "rename", "git", "bar"])
         .success();
     let output = work_dir.run_jj(["bookmark", "list", "--all-remotes"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     git: vkponlun 400c483d message
       @bar: vkponlun 400c483d message
       @git: vkponlun 400c483d message
@@ -600,7 +600,7 @@ fn test_git_fetch_from_remote_with_slashes() {
 
     // Try fetching from the remote named 'git'.
     let output = work_dir.run_jj(["git", "fetch", "--remote=slash/origin"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Error: Git remotes with slashes are incompatible with jj: slash/origin
     Hint: Run `jj git remote rename` to give a different name.
@@ -617,7 +617,7 @@ fn test_git_fetch_prune_before_updating_tips() {
     let work_dir = test_env.work_dir("repo");
     let git_repo = add_git_remote(&test_env, &work_dir, "origin");
     work_dir.run_jj(["git", "fetch"]).success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     origin: qmyrypzk ab8b299e message
       @origin: qmyrypzk ab8b299e message
     [EOF]
@@ -637,7 +637,7 @@ fn test_git_fetch_prune_before_updating_tips() {
         .unwrap();
 
     work_dir.run_jj(["git", "fetch"]).success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     origin/subname: qmyrypzk ab8b299e message
       @origin: qmyrypzk ab8b299e message
     [EOF]
@@ -657,7 +657,7 @@ fn test_git_fetch_conflicting_bookmarks() {
     work_dir
         .run_jj(["bookmark", "create", "-r@", "rem1"])
         .success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     rem1: kkmpptxz 2b17ac71 (empty) (no description set)
       @rem1 (not created yet)
     [EOF]
@@ -667,7 +667,7 @@ fn test_git_fetch_conflicting_bookmarks() {
         .run_jj(["git", "fetch", "--remote", "rem1", "--branch", "*"])
         .success();
     // This should result in a CONFLICTED bookmark
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     rem1 (conflicted):
       + kkmpptxz 2b17ac71 (empty) (no description set)
       + ppspxspk 4acd0343 message
@@ -694,7 +694,7 @@ fn test_git_fetch_conflicting_bookmarks_colocated() {
     work_dir
         .run_jj(["bookmark", "create", "-r@", "rem1"])
         .success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     rem1: zsuskuln c2934cfb (empty) (no description set)
       @git: zsuskuln c2934cfb (empty) (no description set)
       @rem1 (not created yet)
@@ -706,7 +706,7 @@ fn test_git_fetch_conflicting_bookmarks_colocated() {
         .success();
     // This should result in a CONFLICTED bookmark
     // See https://github.com/jj-vcs/jj/pull/1146#discussion_r1112372340 for the bug this tests for.
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     rem1 (conflicted):
       + zsuskuln c2934cfb (empty) (no description set)
       + ppspxspk 4acd0343 message
@@ -785,7 +785,7 @@ fn test_git_fetch_all() {
     "#);
     insta::assert_snapshot!(get_bookmark_output(&target_dir), @"");
     let output = target_dir.run_jj(["git", "fetch"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: a1@origin     [new] tracked
     bookmark: a2@origin     [new] tracked
@@ -793,7 +793,7 @@ fn test_git_fetch_all() {
     bookmark: trunk1@origin [new] tracked
     [EOF]
     ");
-    insta::assert_snapshot!(get_bookmark_output(&target_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&target_dir), @"
     a1: mzvwutvl c8303692 a1
       @origin: mzvwutvl c8303692 a1
     a2: yqosqzyt d4d535f1 a2
@@ -850,7 +850,7 @@ fn test_git_fetch_all() {
     ◆  000000000000 ""
     [EOF]
     "#);
-    insta::assert_snapshot!(get_bookmark_output(&target_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&target_dir), @"
     a1: mzvwutvl c8303692 a1
       @origin: mzvwutvl c8303692 a1
     a2: yqosqzyt d4d535f1 a2
@@ -862,7 +862,7 @@ fn test_git_fetch_all() {
     [EOF]
     ");
     let output = target_dir.run_jj(["git", "fetch"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: a1@origin     [updated] tracked
     bookmark: a2@origin     [updated] tracked
@@ -873,7 +873,7 @@ fn test_git_fetch_all() {
       mzvwutvl/1 c8303692 (divergent) a1
     [EOF]
     ");
-    insta::assert_snapshot!(get_bookmark_output(&target_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&target_dir), @"
     a1: mzvwutvl 798c5e24 a1
       @origin: mzvwutvl 798c5e24 a1
     a2: yqosqzyt baad96fe a2
@@ -939,14 +939,14 @@ fn test_git_fetch_some_of_many_bookmarks() {
 
     // Test an error message
     let output = target_dir.run_jj(["git", "fetch", "--branch", "'^:a*'"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Error: Invalid branch pattern provided. When fetching, branch names and globs may not contain the characters `:`, `^`, `?`, `[`, `]`
     [EOF]
     [exit status: 1]
     ");
     let output = target_dir.run_jj(["git", "fetch", "--branch", "exact:a*"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Error: Invalid branch pattern provided. When fetching, branch names and globs may not contain the characters `:`, `^`, `?`, `[`, `]`
     [EOF]
@@ -961,7 +961,7 @@ fn test_git_fetch_some_of_many_bookmarks() {
     "#);
     // Fetch one bookmark...
     let output = target_dir.run_jj(["git", "fetch", "--branch", "b"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: b@origin [new] tracked
     [EOF]
@@ -975,14 +975,14 @@ fn test_git_fetch_some_of_many_bookmarks() {
     [EOF]
     "#);
     // ...check what the intermediate state looks like...
-    insta::assert_snapshot!(get_bookmark_output(&target_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&target_dir), @"
     b: yostqsxw bc83465a b
       @origin: yostqsxw bc83465a b
     [EOF]
     ");
     // ...then fetch two others with a glob.
     let output = target_dir.run_jj(["git", "fetch", "--branch", "a*"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: a1@origin [new] tracked
     bookmark: a2@origin [new] tracked
@@ -1002,7 +1002,7 @@ fn test_git_fetch_some_of_many_bookmarks() {
     "#);
     // Fetching the same bookmark again
     let output = target_dir.run_jj(["git", "fetch", "--branch", "a1"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Nothing changed.
     [EOF]
@@ -1054,7 +1054,7 @@ fn test_git_fetch_some_of_many_bookmarks() {
     [EOF]
     "#);
     let output = target_dir.run_jj(["git", "fetch", "--branch=~(a2 | trunk*)"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: a1@origin [updated] tracked
     bookmark: b@origin  [updated] tracked
@@ -1079,7 +1079,7 @@ fn test_git_fetch_some_of_many_bookmarks() {
     "#);
 
     // We left a2 where it was before, let's see how `jj bookmark list` sees this.
-    insta::assert_snapshot!(get_bookmark_output(&target_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&target_dir), @"
     a1: mzvwutvl bc7e74c2 a1
       @origin: mzvwutvl bc7e74c2 a1
     a2: yqosqzyt d4d535f1 a2
@@ -1094,7 +1094,7 @@ fn test_git_fetch_some_of_many_bookmarks() {
     // Now, let's fetch a2 and double-check that fetching a1 and b again doesn't do
     // anything.
     let output = target_dir.run_jj(["git", "fetch", "--branch", "b", "--branch", "a*"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: a2@origin [updated] tracked
     Abandoned 1 commits that are no longer reachable:
@@ -1116,7 +1116,7 @@ fn test_git_fetch_some_of_many_bookmarks() {
     ◆  000000000000 ""
     [EOF]
     "#);
-    insta::assert_snapshot!(get_bookmark_output(&target_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&target_dir), @"
     a1: mzvwutvl bc7e74c2 a1
       @origin: mzvwutvl bc7e74c2 a1
     a2: yqosqzyt 841140b1 a2
@@ -1146,7 +1146,7 @@ fn test_git_fetch_bookmarks_some_missing() {
 
     // single missing bookmark, implicit remotes (@origin)
     let output = work_dir.run_jj(["git", "fetch", "--branch", "noexist"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Warning: No matching branches found on any specified/configured remote: noexist
     Nothing changed.
@@ -1158,7 +1158,7 @@ fn test_git_fetch_bookmarks_some_missing() {
     let output = work_dir.run_jj([
         "git", "fetch", "--branch", "noexist1", "--branch", "noexist2",
     ]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Warning: No matching branches found on any specified/configured remote: noexist1, noexist2
     Nothing changed.
@@ -1168,12 +1168,12 @@ fn test_git_fetch_bookmarks_some_missing() {
 
     // single existing bookmark, implicit remotes (@origin)
     let output = work_dir.run_jj(["git", "fetch", "--branch", "origin"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: origin@origin [new] tracked
     [EOF]
     ");
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     origin: qmyrypzk ab8b299e message
       @origin: qmyrypzk ab8b299e message
     [EOF]
@@ -1185,14 +1185,14 @@ fn test_git_fetch_bookmarks_some_missing() {
         "git", "fetch", "--branch", "rem1", "--branch", "rem2", "--branch", "rem3", "--remote",
         "rem1", "--remote", "rem2", "--remote", "rem3",
     ]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: rem1@rem1 [new] tracked
     bookmark: rem2@rem2 [new] tracked
     bookmark: rem3@rem3 [new] tracked
     [EOF]
     ");
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     origin: qmyrypzk ab8b299e message
       @origin: qmyrypzk ab8b299e message
     rem1: ppspxspk 4acd0343 message
@@ -1208,13 +1208,13 @@ fn test_git_fetch_bookmarks_some_missing() {
     let output = work_dir.run_jj([
         "git", "fetch", "--branch", "rem1", "--branch", "notexist", "--remote", "rem1",
     ]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Warning: No matching branches found on any specified/configured remote: notexist
     Nothing changed.
     [EOF]
     ");
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     origin: qmyrypzk ab8b299e message
       @origin: qmyrypzk ab8b299e message
     rem1: ppspxspk 4acd0343 message
@@ -1246,7 +1246,7 @@ fn test_git_fetch_bookmarks_missing_with_subprocess_localized_message() {
             // no matter if system locale exists or not.
             .env("LANGUAGE", "zh_TW")
     });
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Warning: No matching branches found on any specified/configured remote: unknown
     Nothing changed.
@@ -1262,7 +1262,7 @@ fn test_git_fetch_unsupported_branch_patterns() {
     add_git_remote(&test_env, &work_dir, "origin");
 
     let output = work_dir.run_jj(["git", "fetch", "--branch=x&y|z"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Error: Cannot use `&` in sub expression
     Hint: Specify patterns in `(positive | ...) & ~(negative | ...)` form.
@@ -1272,7 +1272,7 @@ fn test_git_fetch_unsupported_branch_patterns() {
 
     // Unsupported glob pattern in negative refspecs
     let output = work_dir.run_jj(["git", "fetch", "--branch=~'[xy]'"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Error: Invalid branch pattern provided. When fetching, branch names and globs may not contain the characters `:`, `^`, `?`, `[`, `]`
     [EOF]
@@ -1316,7 +1316,7 @@ fn test_git_fetch_undo() {
 
     // Fetch 2 bookmarks and tags
     let output = target_dir.run_jj(["git", "fetch", "--branch", "b", "--branch", "a1"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: a1@origin [new] tracked
     bookmark: b@origin  [new] tracked
@@ -1334,9 +1334,9 @@ fn test_git_fetch_undo() {
     [EOF]
     "#);
     let output = target_dir.run_jj(["undo"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
-    Restored to operation: 8aeac520a856 (2001-02-03 08:05:07) add git remote origin
+    Restored to operation: 5354e279dad7 (2001-02-03 08:05:07) add git remote origin
     [EOF]
     ");
     // The undo works as expected
@@ -1347,7 +1347,7 @@ fn test_git_fetch_undo() {
     "#);
     // Now try to fetch just one bookmark and tags
     let output = target_dir.run_jj(["git", "fetch", "--branch", "b"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: b@origin [new] tracked
     tag: tag1@git [new] 
@@ -1402,7 +1402,7 @@ fn test_fetch_undo_what() {
 
     // Fetch a bookmark
     let output = work_dir.run_jj(["git", "fetch", "--branch", "b"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: b@origin [new] tracked
     [EOF]
@@ -1415,7 +1415,7 @@ fn test_fetch_undo_what() {
     ◆  000000000000 ""
     [EOF]
     "#);
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     b: yostqsxw bc83465a b
       @origin: yostqsxw bc83465a b
     [EOF]
@@ -1424,12 +1424,12 @@ fn test_fetch_undo_what() {
     // We can undo the change in the repo without moving the remote-tracking
     // bookmark
     let output = work_dir.run_jj(["op", "restore", "--what", "repo", &base_operation_id]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
-    Restored to operation: 8aeac520a856 (2001-02-03 08:05:07) add git remote origin
+    Restored to operation: 5354e279dad7 (2001-02-03 08:05:07) add git remote origin
     [EOF]
     ");
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     b (deleted)
       @origin: yostqsxw/0 bc83465a (hidden) b
     [EOF]
@@ -1440,7 +1440,7 @@ fn test_fetch_undo_what() {
     work_dir
         .run_jj(["bookmark", "c", "-r@", "newbookmark"])
         .success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     b (deleted)
       @origin: yostqsxw/0 bc83465a (hidden) b
     newbookmark: qpvuntsm e8849ae1 (empty) (no description set)
@@ -1456,12 +1456,12 @@ fn test_fetch_undo_what() {
         "remote-tracking",
         &base_operation_id,
     ]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
-    Restored to operation: 8aeac520a856 (2001-02-03 08:05:07) add git remote origin
+    Restored to operation: 5354e279dad7 (2001-02-03 08:05:07) add git remote origin
     [EOF]
     ");
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     newbookmark: qpvuntsm e8849ae1 (empty) (no description set)
     [EOF]
     ");
@@ -1478,14 +1478,14 @@ fn test_git_fetch_remove_fetch() {
     work_dir
         .run_jj(["bookmark", "create", "-r@", "origin"])
         .success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     origin: qpvuntsm e8849ae1 (empty) (no description set)
       @origin (not created yet)
     [EOF]
     ");
 
     work_dir.run_jj(["git", "fetch"]).success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     origin (conflicted):
       + qpvuntsm e8849ae1 (empty) (no description set)
       + qmyrypzk ab8b299e message
@@ -1496,7 +1496,7 @@ fn test_git_fetch_remove_fetch() {
     work_dir
         .run_jj(["git", "remote", "remove", "origin"])
         .success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     origin (conflicted):
       + qpvuntsm e8849ae1 (empty) (no description set)
       + qmyrypzk ab8b299e message
@@ -1509,12 +1509,12 @@ fn test_git_fetch_remove_fetch() {
 
     // Check that origin@origin is properly recreated
     let output = work_dir.run_jj(["git", "fetch"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: origin@origin [new] tracked
     [EOF]
     ");
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     origin (conflicted):
       + qpvuntsm e8849ae1 (empty) (no description set)
       + qmyrypzk ab8b299e message
@@ -1534,14 +1534,14 @@ fn test_git_fetch_rename_fetch() {
     work_dir
         .run_jj(["bookmark", "create", "-r@", "origin"])
         .success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     origin: qpvuntsm e8849ae1 (empty) (no description set)
       @origin (not created yet)
     [EOF]
     ");
 
     work_dir.run_jj(["git", "fetch"]).success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     origin (conflicted):
       + qpvuntsm e8849ae1 (empty) (no description set)
       + qmyrypzk ab8b299e message
@@ -1552,7 +1552,7 @@ fn test_git_fetch_rename_fetch() {
     work_dir
         .run_jj(["git", "remote", "rename", "origin", "upstream"])
         .success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     origin (conflicted):
       + qpvuntsm e8849ae1 (empty) (no description set)
       + qmyrypzk ab8b299e message
@@ -1562,7 +1562,7 @@ fn test_git_fetch_rename_fetch() {
 
     // Check that jj indicates that nothing has changed
     let output = work_dir.run_jj(["git", "fetch", "--remote", "upstream"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Nothing changed.
     [EOF]
@@ -1601,7 +1601,7 @@ fn test_git_fetch_removed_bookmark() {
 
     // Fetch all bookmarks
     let output = target_dir.run_jj(["git", "fetch"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: a1@origin     [new] tracked
     bookmark: a2@origin     [new] tracked
@@ -1629,7 +1629,7 @@ fn test_git_fetch_removed_bookmark() {
 
     // Fetch bookmark a1 from origin and check that a2 is still there
     let output = target_dir.run_jj(["git", "fetch", "--branch", "a1"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Nothing changed.
     [EOF]
@@ -1649,7 +1649,7 @@ fn test_git_fetch_removed_bookmark() {
 
     // Fetch bookmarks a2 from origin, and check that it has been removed locally
     let output = target_dir.run_jj(["git", "fetch", "--branch", "a2"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: a2@origin [deleted] untracked
     Abandoned 1 commits that are no longer reachable:
@@ -1700,7 +1700,7 @@ fn test_git_fetch_removed_parent_bookmark() {
 
     // Fetch all bookmarks
     let output = target_dir.run_jj(["git", "fetch"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: a1@origin     [new] tracked
     bookmark: a2@origin     [new] tracked
@@ -1732,7 +1732,7 @@ fn test_git_fetch_removed_parent_bookmark() {
     let output = target_dir.run_jj([
         "git", "fetch", "--branch", "master", "--branch", "trunk1", "--branch", "a1",
     ]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: a1@origin     [deleted] untracked
     bookmark: trunk1@origin [deleted] untracked
@@ -1781,7 +1781,7 @@ fn test_git_fetch_remote_only_bookmark() {
     work_dir
         .run_jj(["git", "fetch", "--remote=origin"])
         .success();
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     feature1: qomsplrm ebeb70d8 message
       @origin: qomsplrm ebeb70d8 message
     [EOF]
@@ -1807,7 +1807,7 @@ fn test_git_fetch_remote_only_bookmark() {
     ◆  000000000000 ""
     [EOF]
     "#);
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     feature1: qomsplrm ebeb70d8 message
       @origin: qomsplrm ebeb70d8 message
     feature2@origin: qomsplrm ebeb70d8 message
@@ -1847,7 +1847,7 @@ fn test_git_fetch_preserve_commits_across_repos() {
     ◆  000000000000 ""
     [EOF]
     "#);
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     feature: srwrtuky 16ec9ef2 message
       @fork: srwrtuky 16ec9ef2 message
     upstream: zkvzklqn bcd7cd77 message
@@ -1906,7 +1906,7 @@ fn test_git_fetch_preserve_commits_across_repos() {
     ◆  000000000000 ""
     [EOF]
     "#);
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     upstream: trrkvuqr f3e9250b merge
       @fork (behind by 2 commits): zkvzklqn bcd7cd77 message
       @upstream: trrkvuqr f3e9250b merge
@@ -1941,7 +1941,7 @@ fn test_git_fetch_tracked() {
         .success();
 
     // Both should be tracked
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     feature1: txqvqkwm fc8f3f42 message
       @origin: txqvqkwm fc8f3f42 message
     main: kmpysrkw 0130f303 message
@@ -1955,7 +1955,7 @@ fn test_git_fetch_tracked() {
         .success();
 
     // Verify feature1 is untracked
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     feature1: txqvqkwm fc8f3f42 message
     feature1@origin: txqvqkwm fc8f3f42 message
     main: kmpysrkw 0130f303 message
@@ -1973,7 +1973,7 @@ fn test_git_fetch_tracked() {
 
     // Main should be updated to the new commit, but feature1 should remain
     // unchanged
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     feature1: txqvqkwm fc8f3f42 message
     feature1@origin: txqvqkwm fc8f3f42 message
     main: kmktnoqm 381bf13c (empty) message
@@ -1987,7 +1987,7 @@ fn test_git_fetch_tracked() {
     // Now feature1@origin gets updated but feature1 stays at old commit
     // (untracked), feature2 appears for the first time, and main stays at its
     // already-updated commit
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     feature1: txqvqkwm fc8f3f42 message
     feature1@origin: ksswsvzv 0c0873bb (empty) message
     feature2: ruyplonr 13e64e92 (empty) message
@@ -2026,7 +2026,7 @@ fn test_git_fetch_tracked_no_tracked_bookmarks() {
 
     // Fetch with --tracked should indicate nothing changed
     let output = work_dir.run_jj(["git", "fetch", "--tracked"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Nothing changed.
     [EOF]
@@ -2083,7 +2083,7 @@ fn test_git_fetch_tracked_multiple_remotes() {
         .run_jj(["bookmark", "untrack", "hotfix", "--remote=upstream"])
         .success();
 
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     develop: yzkwtzyq 4217fc8a upstream develop commit
       @upstream: yzkwtzyq 4217fc8a upstream develop commit
     feature1: ovvpyryn 8a4b3895 origin feature1 commit
@@ -2115,7 +2115,7 @@ fn test_git_fetch_tracked_multiple_remotes() {
 
     // Only the tracked branches should be updated (feature1 and develop)
     // Untracked branches (feature2, hotfix) should remain at old commits
-    insta::assert_snapshot!(get_bookmark_output(&work_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&work_dir), @"
     develop: kmsovkut 8b5845da (empty) new upstream develop commit
       @upstream: kmsovkut 8b5845da (empty) new upstream develop commit
     feature1: rmmunkwl d676351d (empty) new origin feature1 commit
@@ -2153,7 +2153,7 @@ fn test_git_fetch_auto_track_bookmarks() {
     origin_dir.run_jj(["b", "c", "not-mine/foo"]).success();
     origin_dir.run_jj(["commit", "-mfoo"]).success();
     let output = origin_dir.run_jj(["show", "@-"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     Commit ID: d7828da83253475bf10c2ae6bd3f0f84bf4604c1
     Change ID: qpvuntsmwlqtpsluzzsnyyzlmlwvmlnu
     Bookmarks: mine/foo not-mine/foo mine/foo@git not-mine/foo@git
@@ -2172,7 +2172,7 @@ fn test_git_fetch_auto_track_bookmarks() {
         .success();
 
     let output = repo_dir.run_jj(["git", "fetch"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     bookmark: mine/foo@origin     [new] tracked
     bookmark: not-mine/foo@origin [new] untracked

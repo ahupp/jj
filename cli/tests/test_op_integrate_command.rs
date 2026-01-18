@@ -26,8 +26,8 @@ fn test_integrate_integrated_operation() {
     let output = work_dir.run_jj(["op", "integrate", "@"]);
     insta::assert_snapshot!(output, @"");
     let output = work_dir.run_jj(["op", "log"]);
-    insta::assert_snapshot!(output, @r"
-    @  8f47435a3990 test-username@host.example.com 2001-02-03 04:05:07.000 +07:00 - 2001-02-03 04:05:07.000 +07:00
+    insta::assert_snapshot!(output, @"
+    @  f045ea2142cf test-username@host.example.com 2001-02-03 04:05:07.000 +07:00 - 2001-02-03 04:05:07.000 +07:00
     │  add workspace 'default'
     ○  000000000000 root()
     [EOF]
@@ -61,33 +61,33 @@ fn test_integrate_sibling_operation() {
 
     // The working copy should now be at the old unintegrated sibling operation
     let output = work_dir.run_jj(["op", "log"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
-    Internal error: The repo was loaded at operation 5959e60d9534, which seems to be a sibling of the working copy's operation 98a299ea1b9b
-    Hint: Run `jj op integrate 98a299ea1b9b` to add the working copy's operation to the operation log.
+    Internal error: The repo was loaded at operation dfb21b30fb23, which seems to be a sibling of the working copy's operation 725118ee780a
+    Hint: Run `jj op integrate 725118ee780a` to add the working copy's operation to the operation log.
     [EOF]
     [exit status: 255]
     ");
 
     // Integrate the operation
     let output = work_dir.run_jj(["op", "integrate", &unintegrated_id]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     The specified operation has been integrated with other existing operations.
     [EOF]
     ");
     let output = work_dir.run_jj(["op", "log"]);
-    insta::assert_snapshot!(output, @r"
-    @    5fff7495e1c0 test-username@host.example.com 2001-02-03 04:05:11.000 +07:00 - 2001-02-03 04:05:11.000 +07:00
+    insta::assert_snapshot!(output, @"
+    @    eca9e916852e test-username@host.example.com 2001-02-03 04:05:11.000 +07:00 - 2001-02-03 04:05:11.000 +07:00
     ├─╮  reconcile divergent operations
-    │ │  args: jj op integrate 98a299ea1b9bd7555bec90a7abf34b877f1ad2ec45e5c0a4962115b5ac1124124524b2935fdf149cdc6634524ce54683479cc978624f84d84270f42264fe0ef9
-    ○ │  98a299ea1b9b test-username@host.example.com 2001-02-03 04:05:08.000 +07:00 - 2001-02-03 04:05:08.000 +07:00
+    │ │  args: jj op integrate 725118ee780aa7bb79dd4a830b429a5fdd11823107a0805635403d52c5029c4fe7da0ed18c9bb1a1c783f0ef0dfb768dce6ddc07b1d9aa4d8e6c3c918a14c71d
+    ○ │  725118ee780a test-username@host.example.com 2001-02-03 04:05:08.000 +07:00 - 2001-02-03 04:05:08.000 +07:00
     │ │  new empty commit
     │ │  args: jj new '-m=first'
-    │ ○  5959e60d9534 test-username@host.example.com 2001-02-03 04:05:09.000 +07:00 - 2001-02-03 04:05:09.000 +07:00
+    │ ○  dfb21b30fb23 test-username@host.example.com 2001-02-03 04:05:09.000 +07:00 - 2001-02-03 04:05:09.000 +07:00
     ├─╯  new empty commit
     │    args: jj new '-m=second' --ignore-working-copy
-    ○  8f47435a3990 test-username@host.example.com 2001-02-03 04:05:07.000 +07:00 - 2001-02-03 04:05:07.000 +07:00
+    ○  f045ea2142cf test-username@host.example.com 2001-02-03 04:05:07.000 +07:00 - 2001-02-03 04:05:07.000 +07:00
     │  add workspace 'default'
     ○  000000000000 root()
     [EOF]

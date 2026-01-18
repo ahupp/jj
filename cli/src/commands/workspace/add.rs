@@ -30,6 +30,9 @@ use crate::cli_util::RevisionArg;
 use crate::command_error::CommandError;
 use crate::command_error::internal_error_with_message;
 use crate::command_error::user_error;
+use crate::git_util::add_git_worktree;
+use crate::git_util::is_colocated_git_workspace;
+use crate::git_util::remove_git_worktree;
 use crate::ui::Ui;
 
 /// How to handle sparse patterns when creating a new workspace.
@@ -116,17 +119,40 @@ pub fn cmd_workspace_add(
         ));
     }
 
+    let is_colocated = is_colocated_git_workspace(old_workspace_command.workspace(), repo);
+    let mut added_git_worktree = false;
+    if is_colocated {
+        add_git_worktree(
+            old_workspace_command.settings(),
+            old_workspace_command.workspace_root(),
+            &destination_path,
+        )?;
+        added_git_worktree = true;
+    }
+
     let working_copy_factory = command.get_working_copy_factory()?;
     let repo_path = old_workspace_command.repo_path();
     // If we add per-workspace configuration, we'll need to reload settings for
     // the new workspace.
-    let (new_workspace, repo) = Workspace::init_workspace_with_existing_repo(
+    let (new_workspace, repo) = match Workspace::init_workspace_with_existing_repo(
         &destination_path,
         repo_path,
         repo,
         working_copy_factory,
         workspace_name.clone(),
-    )?;
+    ) {
+        Ok(result) => result,
+        Err(err) => {
+            if added_git_worktree {
+                drop(remove_git_worktree(
+                    old_workspace_command.settings(),
+                    old_workspace_command.workspace_root(),
+                    &destination_path,
+                ));
+            }
+            return Err(err.into());
+        }
+    };
     writeln!(
         ui.status(),
         "Created workspace in \"{}\"",

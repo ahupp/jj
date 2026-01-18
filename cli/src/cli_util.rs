@@ -519,6 +519,25 @@ impl CommandHelper {
         Ok(factory)
     }
 
+    pub fn working_copy_factory_by_name(
+        &self,
+        name: &str,
+    ) -> Result<&dyn WorkingCopyFactory, CommandError> {
+        self.data
+            .working_copy_factories
+            .get(name)
+            .map(|factory| factory.as_ref())
+            .ok_or_else(|| {
+                map_workspace_load_error(
+                    WorkspaceLoadError::StoreLoadError(StoreLoadError::UnsupportedType {
+                        store: "working copy",
+                        store_type: name.to_owned(),
+                    }),
+                    self.data.global_args.repository.as_deref(),
+                )
+            })
+    }
+
     /// Loads workspace for the current command.
     #[instrument(skip_all)]
     pub fn load_workspace(&self) -> Result<Workspace, CommandError> {
@@ -1221,17 +1240,24 @@ impl WorkspaceCommandHelper {
         git_import_export_lock: &GitImportExportLock,
     ) -> Result<(), CommandError> {
         assert!(self.may_update_working_copy);
+        let workspace_name = self.workspace_name().to_owned();
+        let git_repo = crate::git_util::open_git_repo_for_workspace(self.workspace())?;
         let mut tx = self.start_transaction();
-        jj_lib::git::import_head(tx.repo_mut())?;
+        jj_lib::git::import_head_with_repo(tx.repo_mut(), &workspace_name, &git_repo)?;
         if !tx.repo().has_changes() {
             return Ok(());
         }
 
         let mut tx = tx.into_inner();
-        let old_git_head = self.repo().view().git_head().clone();
-        let new_git_head = tx.repo().view().git_head().clone();
+        let old_git_head = self
+            .repo()
+            .view()
+            .git_head_for_workspace(&workspace_name);
+        let new_git_head = tx
+            .repo()
+            .view()
+            .git_head_for_workspace(&workspace_name);
         if let Some(new_git_head_id) = new_git_head.as_normal() {
-            let workspace_name = self.workspace_name().to_owned();
             let new_git_head_commit = tx.repo().store().get_commit(new_git_head_id)?;
             let wc_commit = tx
                 .repo_mut()
@@ -2118,6 +2144,7 @@ to the current parents may contain changes from multiple commits.
         #[cfg(feature = "git")]
         if self.working_copy_shared_with_git {
             use std::error::Error as _;
+            let git_repo = crate::git_util::open_git_repo_for_workspace(self.workspace())?;
             if let Some(wc_commit) = &maybe_new_wc_commit {
                 // Export Git HEAD while holding the git-head lock to prevent races:
                 // - Between two finish_transaction calls updating HEAD
@@ -2125,7 +2152,12 @@ to the current parents may contain changes from multiple commits.
                 // This can still fail if HEAD was updated concurrently by another JJ process
                 // (overlapping transaction) or a non-JJ process (e.g., git checkout). In that
                 // case, the actual state will be imported on the next snapshot.
-                match jj_lib::git::reset_head(tx.repo_mut(), wc_commit) {
+                match jj_lib::git::reset_head_with_repo(
+                    tx.repo_mut(),
+                    self.workspace_name(),
+                    &git_repo,
+                    wc_commit,
+                ) {
                     Ok(()) => {}
                     Err(err @ jj_lib::git::GitResetHeadError::UpdateHeadRef(_)) => {
                         writeln!(ui.warning_default(), "{err}")?;
@@ -2134,7 +2166,7 @@ to the current parents may contain changes from multiple commits.
                     Err(err) => return Err(err.into()),
                 }
             }
-            let stats = jj_lib::git::export_refs(tx.repo_mut())?;
+            let stats = jj_lib::git::export_refs_with_repo(tx.repo_mut(), &git_repo)?;
             crate::git_util::print_git_export_stats(ui, &stats)?;
         }
 

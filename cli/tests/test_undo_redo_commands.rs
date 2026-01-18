@@ -21,14 +21,14 @@ fn test_undo_root_operation() {
     let work_dir = test_env.work_dir("repo");
 
     let output = work_dir.run_jj(["undo"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Restored to operation: 000000000000 root()
     [EOF]
     ");
 
     let output = work_dir.run_jj(["undo"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Error: Cannot undo root operation
     [EOF]
@@ -45,7 +45,7 @@ fn test_undo_merge_operation() {
     work_dir.run_jj(["new"]).success();
     work_dir.run_jj(["new", "--at-op=@-"]).success();
     let output = work_dir.run_jj(["undo"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Concurrent modification detected, resolving automatically.
     Error: Cannot undo a merge operation
@@ -71,11 +71,11 @@ fn test_undo_push_operation() {
     work_dir.run_jj(["commit", "-mfoo"]).success();
     work_dir.run_jj(["git", "push", "-c@-"]).success();
     let output = work_dir.run_jj(["undo"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Warning: Undoing a push operation often leads to conflicted bookmarks.
     Hint: To avoid this, run `jj redo` now.
-    Restored to operation: f9fd582ef03c (2001-02-03 08:05:09) commit 3850397cf31988d0657948307ad5bbe873d76a38
+    Restored to operation: bd1e35ec8343 (2001-02-03 08:05:09) commit 3850397cf31988d0657948307ad5bbe873d76a38
     [EOF]
     ");
 }
@@ -147,18 +147,18 @@ fn test_undo_with_rev_arg_falls_back_to_revert() {
 
     work_dir.run_jj(["new"]).success();
     let output = work_dir.run_jj(["undo", "@-"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Warning: `jj undo <operation>` is deprecated; use `jj op revert <operation>` instead
-    Reverted operation: 8f47435a3990 (2001-02-03 08:05:07) add workspace 'default'
+    Reverted operation: f045ea2142cf (2001-02-03 08:05:07) add workspace 'default'
     Rebased 1 descendant commits
     [EOF]
     ");
 
     let output = work_dir.run_jj(["op", "log", "-n1"]);
-    insta::assert_snapshot!(output, @r"
-    @  20c0ef5cef23 test-username@host.example.com 2001-02-03 04:05:09.000 +07:00 - 2001-02-03 04:05:09.000 +07:00
-    │  revert operation 8f47435a3990362feaf967ca6de2eb0a31c8b883dfcb66fba5c22200d12bbe61e3dc8bc855f1f6879285fcafaf85ac792f9a43bcc36e57d28737d18347d5e752
+    insta::assert_snapshot!(output, @"
+    @  40cec6bb6247 test-username@host.example.com 2001-02-03 04:05:09.000 +07:00 - 2001-02-03 04:05:09.000 +07:00
+    │  revert operation f045ea2142cf29f80725fef67591309ca80f6c3e2dfb9065b7717be89fa8c1def2d389ebcb1c8524e201a1976221d08334e72909734ea6370c1c11d26976d08d
     │  args: jj undo @-
     [EOF]
     ");
@@ -170,7 +170,7 @@ fn test_can_only_redo_undo_operation() {
     test_env.run_jj_in(".", ["git", "init", "repo"]).success();
     let work_dir = test_env.work_dir("repo");
 
-    insta::assert_snapshot!(work_dir.run_jj(["redo"]), @r"
+    insta::assert_snapshot!(work_dir.run_jj(["redo"]), @"
     ------- stderr -------
     Error: Nothing to redo
     [EOF]
@@ -213,7 +213,7 @@ fn test_jump_over_old_redo_stack() {
     assert_eq!(work_dir.read_file("state"), "D");
 
     // nothing left to redo
-    insta::assert_snapshot!(work_dir.run_jj(["redo"]), @r"
+    insta::assert_snapshot!(work_dir.run_jj(["redo"]), @"
     ------- stderr -------
     Error: Nothing to redo
     [EOF]

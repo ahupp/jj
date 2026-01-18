@@ -32,8 +32,20 @@ pub fn cmd_git_export(
     _args: &GitExportArgs,
 ) -> Result<(), CommandError> {
     let mut workspace_command = command.workspace_helper(ui)?;
+    let working_copy_shared_with_git = workspace_command.working_copy_shared_with_git();
+    let git_repo = if working_copy_shared_with_git {
+        Some(crate::git_util::open_git_repo_for_workspace(
+            workspace_command.workspace(),
+        )?)
+    } else {
+        None
+    };
     let mut tx = workspace_command.start_transaction();
-    let stats = git::export_refs(tx.repo_mut())?;
+    let stats = if let Some(git_repo) = git_repo {
+        git::export_refs_with_repo(tx.repo_mut(), &git_repo)?
+    } else {
+        git::export_refs(tx.repo_mut())?
+    };
     tx.finish(ui, "export git refs")?;
     print_git_export_stats(ui, &stats)?;
     Ok(())

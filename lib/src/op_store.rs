@@ -254,8 +254,9 @@ pub struct View {
     pub local_tags: BTreeMap<RefNameBuf, RefTarget>,
     pub remote_views: BTreeMap<RemoteNameBuf, RemoteView>,
     pub git_refs: BTreeMap<GitRefNameBuf, RefTarget>,
-    /// The commit the Git HEAD points to.
-    // TODO: Support multiple Git worktrees?
+    /// Git HEAD per workspace.
+    pub git_heads: BTreeMap<WorkspaceNameBuf, RefTarget>,
+    /// The commit the Git HEAD points to for the default workspace (legacy).
     // TODO: Do we want to store the current bookmark name too?
     pub git_head: RefTarget,
     // The commit that *should be* checked out in the workspace. Note that the working copy
@@ -273,6 +274,7 @@ impl View {
             local_tags: BTreeMap::new(),
             remote_views: BTreeMap::new(),
             git_refs: BTreeMap::new(),
+            git_heads: BTreeMap::new(),
             git_head: RefTarget::absent(),
             wc_commit_ids: BTreeMap::new(),
         }

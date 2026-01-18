@@ -20,6 +20,7 @@ use std::io::Write as _;
 use std::iter;
 use std::mem;
 use std::path::Path;
+use std::process::Command;
 use std::time::Duration;
 use std::time::Instant;
 
@@ -38,12 +39,14 @@ use jj_lib::git::GitImportStats;
 use jj_lib::git::GitPushStats;
 use jj_lib::git::GitRefKind;
 use jj_lib::git::GitSettings;
+use jj_lib::git::GitSubprocessOptions;
 use jj_lib::op_store::RefTarget;
 use jj_lib::op_store::RemoteRef;
 use jj_lib::ref_name::RemoteRefSymbol;
 use jj_lib::repo::ReadonlyRepo;
 use jj_lib::repo::Repo;
 use jj_lib::settings::RemoteSettingsMap;
+use jj_lib::settings::UserSettings;
 use jj_lib::workspace::Workspace;
 use unicode_width::UnicodeWidthStr as _;
 
@@ -53,6 +56,7 @@ use crate::cli_util::print_updated_commits;
 use crate::command_error::CommandError;
 use crate::command_error::cli_error;
 use crate::command_error::user_error;
+use crate::command_error::user_error_with_message;
 use crate::formatter::Formatter;
 use crate::formatter::FormatterExt as _;
 use crate::revset_util::parse_remote_auto_track_bookmarks_map;
@@ -63,18 +67,125 @@ pub fn is_colocated_git_workspace(workspace: &Workspace, repo: &ReadonlyRepo) ->
     let Ok(git_backend) = git::get_git_backend(repo.store()) else {
         return false;
     };
-    let Some(git_workdir) = git_backend.git_workdir() else {
-        return false; // Bare repository
-    };
-    if git_workdir == workspace.workspace_root() {
-        return true;
-    }
-    // Colocated workspace should have ".git" directory, file, or symlink. Compare
-    // its parent as the git_workdir might be resolved from the real ".git" path.
-    let Ok(dot_git_path) = dunce::canonicalize(workspace.workspace_root().join(".git")) else {
+    let Ok(worktree_repo) = git::open_git_repo_at(
+        workspace.settings(),
+        workspace.workspace_root(),
+    ) else {
         return false;
     };
-    dunce::canonicalize(git_workdir).ok().as_deref() == dot_git_path.parent()
+    if worktree_repo.work_dir().is_none() {
+        return false; // Bare repository
+    }
+    let Ok(worktree_common_dir) = dunce::canonicalize(worktree_repo.common_dir()) else {
+        return false;
+    };
+    let Ok(repo_common_dir) = dunce::canonicalize(git_backend.git_repo().common_dir()) else {
+        return false;
+    };
+    worktree_common_dir == repo_common_dir
+}
+
+pub fn open_git_repo_for_workspace(workspace: &Workspace) -> Result<gix::Repository, CommandError> {
+    git::open_git_repo_at(workspace.settings(), workspace.workspace_root()).map_err(|err| {
+        user_error_with_message(
+            "Failed to open Git repository for the current workspace",
+            err,
+        )
+    })
+}
+
+pub fn add_git_worktree(
+    settings: &UserSettings,
+    source_workspace_root: &Path,
+    destination_path: &Path,
+) -> Result<(), CommandError> {
+    let subprocess_options = GitSubprocessOptions::from_settings(settings)?;
+    let head_exists = git_head_exists(&subprocess_options, source_workspace_root)?;
+    let mut git_cmd = Command::new(&subprocess_options.executable_path);
+    git_cmd
+        .current_dir(source_workspace_root)
+        .args(["-c", "core.fsmonitor=false"])
+        .args(["-c", "submodule.recurse=false"])
+        .arg("worktree")
+        .arg("add");
+    if head_exists {
+        git_cmd.arg("--detach").arg("--no-checkout");
+        git_cmd.arg(destination_path);
+    } else {
+        git_cmd
+            .arg("--orphan")
+            .arg("-b")
+            .arg("jj-workspace")
+            .arg(destination_path);
+    }
+    git_cmd.envs(&subprocess_options.environment);
+
+    let output = git_cmd
+        .output()
+        .map_err(|err| user_error_with_message("Failed to run `git worktree add`", err))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let stderr = stderr.trim();
+        if stderr.is_empty() {
+            return Err(user_error("`git worktree add` failed"));
+        }
+        return Err(user_error(format!("`git worktree add` failed:\n{stderr}")));
+    }
+    Ok(())
+}
+
+pub fn remove_git_worktree(
+    settings: &UserSettings,
+    source_workspace_root: &Path,
+    destination_path: &Path,
+) -> Result<(), CommandError> {
+    let subprocess_options = GitSubprocessOptions::from_settings(settings)?;
+    let mut git_cmd = Command::new(&subprocess_options.executable_path);
+    git_cmd
+        .current_dir(source_workspace_root)
+        .args(["-c", "core.fsmonitor=false"])
+        .args(["-c", "submodule.recurse=false"])
+        .arg("worktree")
+        .arg("remove")
+        .arg("--force")
+        .arg(destination_path);
+    git_cmd.envs(&subprocess_options.environment);
+
+    let output = git_cmd
+        .output()
+        .map_err(|err| user_error_with_message("Failed to run `git worktree remove`", err))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let stderr = stderr.trim();
+        if stderr.is_empty() {
+            return Err(user_error("`git worktree remove` failed"));
+        }
+        return Err(user_error(format!(
+            "`git worktree remove` failed:\n{stderr}"
+        )));
+    }
+    Ok(())
+}
+
+fn git_head_exists(
+    subprocess_options: &GitSubprocessOptions,
+    source_workspace_root: &Path,
+) -> Result<bool, CommandError> {
+    let mut git_cmd = Command::new(&subprocess_options.executable_path);
+    git_cmd
+        .current_dir(source_workspace_root)
+        .args(["-c", "core.fsmonitor=false"])
+        .args(["-c", "submodule.recurse=false"])
+        .arg("rev-parse")
+        .arg("--verify")
+        .arg("--quiet")
+        .arg("HEAD");
+    git_cmd.envs(&subprocess_options.environment);
+
+    let output = git_cmd
+        .output()
+        .map_err(|err| user_error_with_message("Failed to run `git rev-parse`", err))?;
+    Ok(output.status.success())
 }
 
 /// Parses user-specified remote URL or path to absolute form.

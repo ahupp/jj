@@ -149,7 +149,7 @@ pub enum RevsetCommitRef {
     },
     Tags(StringExpression),
     GitRefs,
-    GitHead,
+    GitHead(Option<WorkspaceNameBuf>),
 }
 
 /// A custom revset filter expression, defined by an extension.
@@ -427,7 +427,11 @@ impl<St: ExpressionState<CommitRef = RevsetCommitRef>> RevsetExpression<St> {
     }
 
     pub fn git_head() -> Arc<Self> {
-        Arc::new(Self::CommitRef(RevsetCommitRef::GitHead))
+        Arc::new(Self::CommitRef(RevsetCommitRef::GitHead(None)))
+    }
+
+    pub fn git_head_for_workspace(name: Option<WorkspaceNameBuf>) -> Arc<Self> {
+        Arc::new(Self::CommitRef(RevsetCommitRef::GitHead(name)))
     }
 }
 
@@ -939,13 +943,14 @@ static BUILTIN_FUNCTION_MAP: LazyLock<HashMap<&str, RevsetFunction>> = LazyLock:
         Ok(RevsetExpression::git_refs())
     });
     // TODO: Remove in jj 0.43+
-    map.insert("git_head", |diagnostics, function, _context| {
+    map.insert("git_head", |diagnostics, function, context| {
         diagnostics.add_warning(RevsetParseError::expression(
             "git_head() is deprecated; use first_parent(@) instead",
             function.name_span,
         ));
         function.expect_no_arguments()?;
-        Ok(RevsetExpression::git_head())
+        let workspace_name = context.workspace.map(|ctx| ctx.workspace_name.to_owned());
+        Ok(RevsetExpression::git_head_for_workspace(workspace_name))
     });
     map.insert("latest", |diagnostics, function, context| {
         let ([candidates_arg], [count_opt_arg]) = function.expect_arguments()?;
@@ -2945,7 +2950,14 @@ fn resolve_commit_ref(
             }
             Ok(commit_ids)
         }
-        RevsetCommitRef::GitHead => Ok(repo.view().git_head().added_ids().cloned().collect()),
+        RevsetCommitRef::GitHead(workspace_name) => {
+            let target = if let Some(name) = workspace_name {
+                repo.view().git_head_for_workspace(name)
+            } else {
+                repo.view().git_head().clone()
+            };
+            Ok(target.added_ids().cloned().collect())
+        }
     }
 }
 
@@ -5960,7 +5972,7 @@ mod tests {
         let _guard = settings.bind_to_scope();
 
         // Heads of basic range operators can be folded.
-        insta::assert_debug_snapshot!(optimize(parse("heads(::)").unwrap()), @r"
+        insta::assert_debug_snapshot!(optimize(parse("heads(::)").unwrap()), @"
         HeadsRange {
             roots: None,
             heads: VisibleHeadsOrReferenced,
@@ -5978,7 +5990,7 @@ mod tests {
         "#);
         // It might be better to use `roots: Root`, but it would require adding a
         // special case for `~root()`, and this should be similar in performance.
-        insta::assert_debug_snapshot!(optimize(parse("heads(..)").unwrap()), @r"
+        insta::assert_debug_snapshot!(optimize(parse("heads(..)").unwrap()), @"
         HeadsRange {
             roots: None,
             heads: VisibleHeadsOrReferenced,

@@ -24,6 +24,8 @@ use jj_lib::git;
 use jj_lib::git::GitRefKind;
 use jj_lib::git::GitSettings;
 use jj_lib::git::parse_git_ref;
+use jj_lib::ref_name::WorkspaceName;
+use jj_lib::ref_name::WorkspaceNameBuf;
 use jj_lib::repo::ReadonlyRepo;
 use jj_lib::repo::Repo as _;
 use jj_lib::view::View;
@@ -35,6 +37,7 @@ use crate::cli_util::start_repo_transaction;
 use crate::command_error::CommandError;
 use crate::command_error::cli_error;
 use crate::command_error::internal_error;
+use crate::command_error::user_error;
 use crate::command_error::user_error_with_hint;
 use crate::command_error::user_error_with_message;
 use crate::commands::git::maybe_add_gitignore;
@@ -160,13 +163,8 @@ fn do_init(
     let colocated_git_repo_path = workspace_root.join(".git");
     let init_mode = if colocate {
         if colocated_git_repo_path.exists() {
-            // Refuse to colocate inside a Git worktree
             if is_linked_git_worktree(workspace_root) {
-                return Err(user_error_with_hint(
-                    "Cannot create a colocated jj repo inside a Git worktree.",
-                    "Run `jj git init` in the main Git repository instead, or use `jj workspace \
-                     add` to create additional jj workspaces.",
-                ));
+                return init_colocated_git_worktree(ui, command, workspace_root);
             }
             GitInitMode::External(colocated_git_repo_path)
         } else {
@@ -218,7 +216,13 @@ fn do_init(
             if !workspace_command.working_copy_shared_with_git() {
                 let mut tx = workspace_command.start_transaction();
                 jj_lib::git::import_head(tx.repo_mut())?;
-                if let Some(git_head_id) = tx.repo().view().git_head().as_normal().cloned() {
+                if let Some(git_head_id) = tx
+                    .repo()
+                    .view()
+                    .git_head_for_workspace(WorkspaceName::DEFAULT)
+                    .as_normal()
+                    .cloned()
+                {
                     let git_head_commit = tx.repo().store().get_commit(&git_head_id)?;
                     tx.check_out(&git_head_commit)?;
                 }
@@ -232,6 +236,60 @@ fn do_init(
             Workspace::init_internal_git(&settings, workspace_root)?;
         }
     }
+    Ok(())
+}
+
+fn init_colocated_git_worktree(
+    ui: &mut Ui,
+    command: &CommandHelper,
+    workspace_root: &Path,
+) -> Result<(), CommandError> {
+    let git_repo = gix::open(workspace_root)
+        .map_err(|err| user_error_with_message("Failed to open Git worktree", err))?;
+    let common_dir = dunce::canonicalize(git_repo.common_dir())
+        .map_err(|err| user_error_with_message("Failed to resolve Git common dir", err))?;
+    let main_workspace_root = common_dir
+        .parent()
+        .ok_or_else(|| user_error("Failed to resolve main Git workspace root"))?
+        .to_path_buf();
+    let main_repo_dir = main_workspace_root.join(".jj").join("repo");
+    if !main_repo_dir.exists() {
+        return Err(user_error_with_hint(
+            "Cannot create a colocated jj workspace inside a Git worktree.",
+            "Run `jj git init --colocate` in the main Git repository first.",
+        ));
+    }
+
+    let (main_settings, _main_config_env) =
+        command.settings_for_new_workspace(ui, &main_workspace_root)?;
+    let main_workspace = command.load_workspace_at(&main_workspace_root, &main_settings)?;
+    let repo = main_workspace.repo_loader().load_at_head()?;
+
+    let workspace_name = workspace_root
+        .file_name()
+        .ok_or_else(|| user_error("New workspace name cannot be empty"))?
+        .to_str()
+        .ok_or_else(|| user_error("Destination path is not valid UTF-8"))?;
+    let workspace_name: WorkspaceNameBuf = workspace_name.into();
+    if repo.view().get_wc_commit_id(&workspace_name).is_some() {
+        return Err(user_error(format!(
+            "Workspace named '{name}' already exists",
+            name = workspace_name.as_symbol()
+        )));
+    }
+
+    let working_copy_factory =
+        command.working_copy_factory_by_name(main_workspace.working_copy().name())?;
+    let (workspace, repo) = Workspace::init_workspace_with_existing_repo(
+        workspace_root,
+        main_workspace.repo_path(),
+        &repo,
+        working_copy_factory,
+        workspace_name,
+    )?;
+    let mut workspace_command = command.for_workable_repo(ui, workspace, repo)?;
+    maybe_add_gitignore(&workspace_command)?;
+    workspace_command.maybe_snapshot(ui)?;
     Ok(())
 }
 
@@ -350,10 +408,29 @@ fn print_trackable_remote_bookmarks(ui: &Ui, view: &View) -> io::Result<()> {
 
 /// Returns `true` if the path is inside a linked Git worktree.
 fn is_linked_git_worktree(workspace_root: &Path) -> bool {
-    let Ok(repo) = gix::open(workspace_root) else {
+    let git_file = workspace_root.join(".git");
+    if !git_file.is_file() {
+        return false;
+    }
+    let Ok(contents) = std::fs::read_to_string(&git_file) else {
         return false;
     };
-    // In linked worktrees, git_dir points to .git/worktrees/<name> while
-    // common_dir points to the main .git directory
-    repo.git_dir() != repo.common_dir()
+    let Some(line) = contents.lines().next() else {
+        return false;
+    };
+    let Some(gitdir_str) = line.strip_prefix("gitdir: ") else {
+        return false;
+    };
+    let gitdir_path = {
+        let path = PathBuf::from(gitdir_str.trim());
+        if path.is_relative() {
+            git_file
+                .parent()
+                .unwrap_or(workspace_root)
+                .join(path)
+        } else {
+            path
+        }
+    };
+    gitdir_path.join("commondir").is_file()
 }

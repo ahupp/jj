@@ -35,7 +35,7 @@ fn test_templater_parse_error() {
     'format_id(id)' = 'id.sort()'
     "###,
     );
-    insta::assert_snapshot!(render(r#"conflicts"#), @r"
+    insta::assert_snapshot!(render(r#"conflicts"#), @"
     ------- stderr -------
     Error: Failed to parse template: Keyword `conflicts` doesn't exist
     Caused by:  --> 1:1
@@ -48,7 +48,7 @@ fn test_templater_parse_error() {
     [EOF]
     [exit status: 1]
     ");
-    insta::assert_snapshot!(render(r#"commit_id.shorter()"#), @r"
+    insta::assert_snapshot!(render(r#"commit_id.shorter()"#), @"
     ------- stderr -------
     Error: Failed to parse template: Method `shorter` doesn't exist for type `CommitId`
     Caused by:  --> 1:11
@@ -61,7 +61,7 @@ fn test_templater_parse_error() {
     [EOF]
     [exit status: 1]
     ");
-    insta::assert_snapshot!(render(r#"oncat()"#), @r"
+    insta::assert_snapshot!(render(r#"oncat()"#), @"
     ------- stderr -------
     Error: Failed to parse template: Function `oncat` doesn't exist
     Caused by:  --> 1:1
@@ -87,7 +87,7 @@ fn test_templater_parse_error() {
     [EOF]
     [exit status: 1]
     "#);
-    insta::assert_snapshot!(render(r#"format_id(commit_id)"#), @r"
+    insta::assert_snapshot!(render(r#"format_id(commit_id)"#), @"
     ------- stderr -------
     Error: Failed to parse template: In alias `format_id(id)`
     Caused by:
@@ -109,7 +109,7 @@ fn test_templater_parse_error() {
     ");
 
     // "at least N arguments"
-    insta::assert_snapshot!(render("separate()"), @r"
+    insta::assert_snapshot!(render("separate()"), @"
     ------- stderr -------
     Error: Failed to parse template: Function `separate`: Expected at least 1 arguments
     Caused by:  --> 1:10
@@ -124,7 +124,7 @@ fn test_templater_parse_error() {
 
     // -Tbuiltin shows the predefined builtin_* aliases. This isn't 100%
     // guaranteed, but is nice.
-    insta::assert_snapshot!(render(r#"builtin"#), @r"
+    insta::assert_snapshot!(render(r#"builtin"#), @"
     ------- stderr -------
     Error: Failed to parse template: Keyword `builtin` doesn't exist
     Caused by:  --> 1:1
@@ -152,7 +152,7 @@ fn test_templater_parse_warning() {
         )
     "#};
     let output = work_dir.run_jj(["log", "-r@", "-T", template]);
-    insta::assert_snapshot!(output, @r###"
+    insta::assert_snapshot!(output, @"
     @  false
     │
     ~
@@ -173,7 +173,7 @@ fn test_templater_parse_warning() {
       |
       = commit.git_refs() is deprecated; use .remote_bookmarks()/tags() instead
     [EOF]
-    "###);
+    ");
 }
 
 #[test]
@@ -220,7 +220,7 @@ fn test_templater_alias() {
     insta::assert_snapshot!(render("my_commit_id"), @"000000000000[EOF]");
     insta::assert_snapshot!(render("identity(my_commit_id)"), @"000000000000[EOF]");
 
-    insta::assert_snapshot!(render("commit_id ++ syntax_error"), @r"
+    insta::assert_snapshot!(render("commit_id ++ syntax_error"), @"
     ------- stderr -------
     Error: Failed to parse template: In alias `syntax_error`
     Caused by:
@@ -240,7 +240,7 @@ fn test_templater_alias() {
     [exit status: 1]
     ");
 
-    insta::assert_snapshot!(render("commit_id ++ name_error"), @r"
+    insta::assert_snapshot!(render("commit_id ++ name_error"), @"
     ------- stderr -------
     Error: Failed to parse template: In alias `name_error`
     Caused by:
@@ -298,7 +298,7 @@ fn test_templater_alias() {
     [exit status: 1]
     "#);
 
-    insta::assert_snapshot!(render("commit_id ++ recurse"), @r"
+    insta::assert_snapshot!(render("commit_id ++ recurse"), @"
     ------- stderr -------
     Error: Failed to parse template: In alias `recurse`
     Caused by:
@@ -330,7 +330,7 @@ fn test_templater_alias() {
     [exit status: 1]
     ");
 
-    insta::assert_snapshot!(render("identity()"), @r"
+    insta::assert_snapshot!(render("identity()"), @"
     ------- stderr -------
     Error: Failed to parse template: Function `identity`: Expected 1 arguments
     Caused by:  --> 1:10
@@ -342,7 +342,7 @@ fn test_templater_alias() {
     [EOF]
     [exit status: 1]
     ");
-    insta::assert_snapshot!(render("identity(commit_id, commit_id)"), @r"
+    insta::assert_snapshot!(render("identity(commit_id, commit_id)"), @"
     ------- stderr -------
     Error: Failed to parse template: Function `identity`: Expected 1 arguments
     Caused by:  --> 1:10
@@ -381,7 +381,7 @@ fn test_templater_alias() {
     [exit status: 1]
     "#);
 
-    insta::assert_snapshot!(render("(-my_commit_id)"), @r"
+    insta::assert_snapshot!(render("(-my_commit_id)"), @"
     ------- stderr -------
     Error: Failed to parse template: In alias `my_commit_id`
     Caused by:
@@ -402,7 +402,7 @@ fn test_templater_alias() {
     ");
 
     let output = work_dir.run_jj(["log", "-r@", "-Tdeprecated()"]);
-    insta::assert_snapshot!(output, @r###"
+    insta::assert_snapshot!(output, @r#"
     #  false
     │
     ~
@@ -435,7 +435,7 @@ fn test_templater_alias() {
       |
       = commit.git_refs() is deprecated; use .remote_bookmarks()/tags() instead
     [EOF]
-    "###);
+    "#);
 }
 
 #[test]
@@ -480,7 +480,7 @@ fn test_templater_bad_alias_decl() {
 
     // Invalid declaration should be warned and ignored.
     let output = work_dir.run_jj(["log", "--no-graph", "-r@-", "-Tmy_commit_id"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     000000000000[EOF]
     ------- stderr -------
     Warning: Failed to load `template-aliases.badfn(a, a)`:  --> 1:7
@@ -506,7 +506,7 @@ fn test_templater_config_function() {
     insta::assert_snapshot!(
         render("config('user')"),
         @r#"{ email = "test.user@example.com", name = "Test User" }[EOF]"#);
-    insta::assert_snapshot!(render("config('invalid name')"), @r"
+    insta::assert_snapshot!(render("config('invalid name')"), @"
     ------- stderr -------
     Error: Failed to parse template: Failed to parse config name
     Caused by:
@@ -525,7 +525,7 @@ fn test_templater_config_function() {
     [EOF]
     [exit status: 1]
     ");
-    insta::assert_snapshot!(render("config('unknown')"), @r"
+    insta::assert_snapshot!(render("config('unknown')"), @"
     ------- stderr -------
     Error: Failed to parse template: Failed to get config value
     Caused by:

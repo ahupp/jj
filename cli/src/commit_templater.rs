@@ -1214,8 +1214,11 @@ fn builtin_commit_methods<'repo>() -> CommitTemplateBuildMethodFnMap<'repo, Comm
             ));
             function.expect_no_arguments()?;
             let repo = language.repo;
-            let out_property = self_property.map(|commit| {
-                let target = repo.view().git_head();
+            let workspace_name = language.workspace_name.clone();
+            let out_property = self_property.map(move |commit| {
+                let target = repo
+                    .view()
+                    .git_head_for_workspace(&workspace_name);
                 target.added_ids().contains(commit.id())
             });
             Ok(out_property.into_dyn_wrapped())

@@ -118,7 +118,7 @@ fn test_git_init_ignore_working_copy() {
     work_dir.write_file("file1", "");
 
     let output = work_dir.run_jj(["git", "init", "--ignore-working-copy"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Error: --ignore-working-copy is not respected
     [EOF]
@@ -132,7 +132,7 @@ fn test_git_init_at_operation() {
     let work_dir = test_env.work_dir("").create_dir("repo");
 
     let output = work_dir.run_jj(["git", "init", "--at-op=@-"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Error: --at-op is not respected
     [EOF]
@@ -187,13 +187,13 @@ fn test_git_init_external(bare: bool) {
 
     // Check that the Git repo's HEAD got checked out
     insta::allow_duplicates! {
-        insta::assert_snapshot!(get_log_output(&work_dir), @r"
+        insta::assert_snapshot!(get_log_output(&work_dir), @"
         @  ed6b513890ae
         ○  e80a42cccd06 my-bookmark My commit message
         ◆  000000000000
         [EOF]
         ");
-        insta::assert_snapshot!(get_colocation_status(&work_dir), @r"
+        insta::assert_snapshot!(get_colocation_status(&work_dir), @"
         Workspace is currently not colocated with Git.
         Last imported/exported Git HEAD: e80a42cccd069007c7a2bb427ac7f1d10b408633
         [EOF]
@@ -346,7 +346,7 @@ fn test_git_init_external_import_trunk_upstream_takes_precedence() {
 fn test_git_init_external_non_existent_directory() {
     let test_env = TestEnvironment::default();
     let output = test_env.run_jj_in(".", ["git", "init", "repo", "--git-repo", "non-existent"]);
-    insta::assert_snapshot!(output.strip_stderr_last_line(), @r"
+    insta::assert_snapshot!(output.strip_stderr_last_line(), @"
     ------- stderr -------
     Error: Failed to access the repository
     Caused by:
@@ -403,13 +403,13 @@ fn test_git_init_colocated_via_git_repo_path() {
     );
 
     // Check that the Git repo's HEAD got checked out
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  f3fe58bc88cc
     ○  e80a42cccd06 my-bookmark My commit message
     ◆  000000000000
     [EOF]
     ");
-    insta::assert_snapshot!(get_colocation_status(&work_dir), @r"
+    insta::assert_snapshot!(get_colocation_status(&work_dir), @"
     Workspace is currently colocated with Git.
     Last imported/exported Git HEAD: e80a42cccd069007c7a2bb427ac7f1d10b408633
     [EOF]
@@ -417,14 +417,14 @@ fn test_git_init_colocated_via_git_repo_path() {
 
     // Check that the Git repo's HEAD moves
     work_dir.run_jj(["new"]).success();
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  bacc067e7740
     ○  f3fe58bc88cc
     ○  e80a42cccd06 my-bookmark My commit message
     ◆  000000000000
     [EOF]
     ");
-    insta::assert_snapshot!(get_colocation_status(&work_dir), @r"
+    insta::assert_snapshot!(get_colocation_status(&work_dir), @"
     Workspace is currently colocated with Git.
     Last imported/exported Git HEAD: f3fe58bc88ccfb820b930a21297d8e48bf76ac2a
     [EOF]
@@ -451,13 +451,13 @@ fn test_git_init_colocated_via_git_repo_path_gitlink() {
     insta::assert_snapshot!(read_git_target(&jj_work_dir), @"../../../.git");
 
     // Check that the Git repo's HEAD got checked out
-    insta::assert_snapshot!(get_log_output(&jj_work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&jj_work_dir), @"
     @  f3fe58bc88cc
     ○  e80a42cccd06 my-bookmark My commit message
     ◆  000000000000
     [EOF]
     ");
-    insta::assert_snapshot!(get_colocation_status(&jj_work_dir), @r"
+    insta::assert_snapshot!(get_colocation_status(&jj_work_dir), @"
     Workspace is currently colocated with Git.
     Last imported/exported Git HEAD: e80a42cccd069007c7a2bb427ac7f1d10b408633
     [EOF]
@@ -465,14 +465,14 @@ fn test_git_init_colocated_via_git_repo_path_gitlink() {
 
     // Check that the Git repo's HEAD moves
     jj_work_dir.run_jj(["new"]).success();
-    insta::assert_snapshot!(get_log_output(&jj_work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&jj_work_dir), @"
     @  bacc067e7740
     ○  f3fe58bc88cc
     ○  e80a42cccd06 my-bookmark My commit message
     ◆  000000000000
     [EOF]
     ");
-    insta::assert_snapshot!(get_colocation_status(&jj_work_dir), @r"
+    insta::assert_snapshot!(get_colocation_status(&jj_work_dir), @"
     Workspace is currently colocated with Git.
     Last imported/exported Git HEAD: f3fe58bc88ccfb820b930a21297d8e48bf76ac2a
     [EOF]
@@ -499,13 +499,13 @@ fn test_git_init_colocated_via_git_repo_path_symlink_directory() {
     insta::assert_snapshot!(read_git_target(&jj_work_dir), @"../../../.git");
 
     // Check that the Git repo's HEAD got checked out
-    insta::assert_snapshot!(get_log_output(&jj_work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&jj_work_dir), @"
     @  f3fe58bc88cc
     ○  e80a42cccd06 my-bookmark My commit message
     ◆  000000000000
     [EOF]
     ");
-    insta::assert_snapshot!(get_colocation_status(&jj_work_dir), @r"
+    insta::assert_snapshot!(get_colocation_status(&jj_work_dir), @"
     Workspace is currently colocated with Git.
     Last imported/exported Git HEAD: e80a42cccd069007c7a2bb427ac7f1d10b408633
     [EOF]
@@ -513,14 +513,14 @@ fn test_git_init_colocated_via_git_repo_path_symlink_directory() {
 
     // Check that the Git repo's HEAD moves
     jj_work_dir.run_jj(["new"]).success();
-    insta::assert_snapshot!(get_log_output(&jj_work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&jj_work_dir), @"
     @  bacc067e7740
     ○  f3fe58bc88cc
     ○  e80a42cccd06 my-bookmark My commit message
     ◆  000000000000
     [EOF]
     ");
-    insta::assert_snapshot!(get_colocation_status(&jj_work_dir), @r"
+    insta::assert_snapshot!(get_colocation_status(&jj_work_dir), @"
     Workspace is currently colocated with Git.
     Last imported/exported Git HEAD: f3fe58bc88ccfb820b930a21297d8e48bf76ac2a
     [EOF]
@@ -551,13 +551,13 @@ fn test_git_init_colocated_via_git_repo_path_symlink_directory_without_bare_conf
     insta::assert_snapshot!(read_git_target(&jj_work_dir), @"../../../.git");
 
     // Check that the Git repo's HEAD got checked out
-    insta::assert_snapshot!(get_log_output(&jj_work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&jj_work_dir), @"
     @  f3fe58bc88cc
     ○  e80a42cccd06 my-bookmark My commit message
     ◆  000000000000
     [EOF]
     ");
-    insta::assert_snapshot!(get_colocation_status(&jj_work_dir), @r"
+    insta::assert_snapshot!(get_colocation_status(&jj_work_dir), @"
     Workspace is currently colocated with Git.
     Last imported/exported Git HEAD: e80a42cccd069007c7a2bb427ac7f1d10b408633
     [EOF]
@@ -565,14 +565,14 @@ fn test_git_init_colocated_via_git_repo_path_symlink_directory_without_bare_conf
 
     // Check that the Git repo's HEAD moves
     jj_work_dir.run_jj(["new"]).success();
-    insta::assert_snapshot!(get_log_output(&jj_work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&jj_work_dir), @"
     @  bacc067e7740
     ○  f3fe58bc88cc
     ○  e80a42cccd06 my-bookmark My commit message
     ◆  000000000000
     [EOF]
     ");
-    insta::assert_snapshot!(get_colocation_status(&jj_work_dir), @r"
+    insta::assert_snapshot!(get_colocation_status(&jj_work_dir), @"
     Workspace is currently colocated with Git.
     Last imported/exported Git HEAD: f3fe58bc88ccfb820b930a21297d8e48bf76ac2a
     [EOF]
@@ -606,13 +606,13 @@ fn test_git_init_colocated_via_git_repo_path_symlink_gitlink() {
     insta::assert_snapshot!(read_git_target(&jj_work_dir), @"../../../.git");
 
     // Check that the Git repo's HEAD got checked out
-    insta::assert_snapshot!(get_log_output(&jj_work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&jj_work_dir), @"
     @  f3fe58bc88cc
     ○  e80a42cccd06 my-bookmark My commit message
     ◆  000000000000
     [EOF]
     ");
-    insta::assert_snapshot!(get_colocation_status(&jj_work_dir), @r"
+    insta::assert_snapshot!(get_colocation_status(&jj_work_dir), @"
     Workspace is currently colocated with Git.
     Last imported/exported Git HEAD: e80a42cccd069007c7a2bb427ac7f1d10b408633
     [EOF]
@@ -620,14 +620,14 @@ fn test_git_init_colocated_via_git_repo_path_symlink_gitlink() {
 
     // Check that the Git repo's HEAD moves
     jj_work_dir.run_jj(["new"]).success();
-    insta::assert_snapshot!(get_log_output(&jj_work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&jj_work_dir), @"
     @  bacc067e7740
     ○  f3fe58bc88cc
     ○  e80a42cccd06 my-bookmark My commit message
     ◆  000000000000
     [EOF]
     ");
-    insta::assert_snapshot!(get_colocation_status(&jj_work_dir), @r"
+    insta::assert_snapshot!(get_colocation_status(&jj_work_dir), @"
     Workspace is currently colocated with Git.
     Last imported/exported Git HEAD: f3fe58bc88ccfb820b930a21297d8e48bf76ac2a
     [EOF]
@@ -676,7 +676,7 @@ fn test_git_init_colocated_via_git_repo_path_imported_refs() {
     Initialized repo in "."
     [EOF]
     "#);
-    insta::assert_snapshot!(get_bookmark_output(&local_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&local_dir), @"
     local-remote: qpvuntsm e8849ae1 (empty) (no description set)
       @git: qpvuntsm e8849ae1 (empty) (no description set)
       @origin: qpvuntsm e8849ae1 (empty) (no description set)
@@ -701,7 +701,7 @@ fn test_git_init_colocated_via_git_repo_path_imported_refs() {
     Initialized repo in "."
     [EOF]
     "#);
-    insta::assert_snapshot!(get_bookmark_output(&local_dir), @r"
+    insta::assert_snapshot!(get_bookmark_output(&local_dir), @"
     local-remote: qpvuntsm e8849ae1 (empty) (no description set)
       @git: qpvuntsm e8849ae1 (empty) (no description set)
     local-remote@origin: qpvuntsm e8849ae1 (empty) (no description set)
@@ -756,7 +756,7 @@ fn test_git_init_colocated_dirty_working_copy() {
 
     // Working-copy changes should have been snapshotted.
     let output = work_dir.run_jj(["log", "-s", "--ignore-working-copy"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     @  sqpuoqvx test.user@example.com 2001-02-03 08:05:07 6efc2a53
     │  (no description set)
     │  C {some-file => new-staged-file}
@@ -830,7 +830,7 @@ fn test_git_init_external_but_git_dir_exists() {
     "#);
 
     // The local ".git" repository is unrelated, so no commits should be imported
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  e8849ae12c70
     ◆  000000000000
     [EOF]
@@ -838,13 +838,13 @@ fn test_git_init_external_but_git_dir_exists() {
 
     // Check that Git HEAD is not set because this isn't a colocated workspace
     work_dir.run_jj(["new"]).success();
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  1c1c95df80e5
     ○  e8849ae12c70
     ◆  000000000000
     [EOF]
     ");
-    insta::assert_snapshot!(get_colocation_status(&work_dir), @r"
+    insta::assert_snapshot!(get_colocation_status(&work_dir), @"
     Workspace is currently not colocated with Git.
     Last imported/exported Git HEAD: (none)
     [EOF]
@@ -867,13 +867,13 @@ fn test_git_init_colocated_via_flag_git_dir_exists() {
     "#);
 
     // Check that the Git repo's HEAD got checked out
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  f3fe58bc88cc
     ○  e80a42cccd06 my-bookmark My commit message
     ◆  000000000000
     [EOF]
     ");
-    insta::assert_snapshot!(get_colocation_status(&work_dir), @r"
+    insta::assert_snapshot!(get_colocation_status(&work_dir), @"
     Workspace is currently colocated with Git.
     Last imported/exported Git HEAD: e80a42cccd069007c7a2bb427ac7f1d10b408633
     [EOF]
@@ -881,14 +881,14 @@ fn test_git_init_colocated_via_flag_git_dir_exists() {
 
     // Check that the Git repo's HEAD moves
     work_dir.run_jj(["new"]).success();
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  bacc067e7740
     ○  f3fe58bc88cc
     ○  e80a42cccd06 my-bookmark My commit message
     ◆  000000000000
     [EOF]
     ");
-    insta::assert_snapshot!(get_colocation_status(&work_dir), @r"
+    insta::assert_snapshot!(get_colocation_status(&work_dir), @"
     Workspace is currently colocated with Git.
     Last imported/exported Git HEAD: f3fe58bc88ccfb820b930a21297d8e48bf76ac2a
     [EOF]
@@ -913,13 +913,13 @@ fn test_git_init_colocated_via_config_git_dir_exists() {
     "#);
 
     // Check that the Git repo's HEAD got checked out
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  f3fe58bc88cc
     ○  e80a42cccd06 my-bookmark My commit message
     ◆  000000000000
     [EOF]
     ");
-    insta::assert_snapshot!(get_colocation_status(&work_dir), @r"
+    insta::assert_snapshot!(get_colocation_status(&work_dir), @"
     Workspace is currently colocated with Git.
     Last imported/exported Git HEAD: e80a42cccd069007c7a2bb427ac7f1d10b408633
     [EOF]
@@ -927,14 +927,14 @@ fn test_git_init_colocated_via_config_git_dir_exists() {
 
     // Check that the Git repo's HEAD moves
     work_dir.run_jj(["new"]).success();
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  bacc067e7740
     ○  f3fe58bc88cc
     ○  e80a42cccd06 my-bookmark My commit message
     ◆  000000000000
     [EOF]
     ");
-    insta::assert_snapshot!(get_colocation_status(&work_dir), @r"
+    insta::assert_snapshot!(get_colocation_status(&work_dir), @"
     Workspace is currently colocated with Git.
     Last imported/exported Git HEAD: f3fe58bc88ccfb820b930a21297d8e48bf76ac2a
     [EOF]
@@ -970,12 +970,12 @@ fn test_git_init_colocated_via_flag_git_dir_not_exists() {
     [EOF]
     "#);
     // No HEAD ref is available yet
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  e8849ae12c70
     ◆  000000000000
     [EOF]
     ");
-    insta::assert_snapshot!(get_colocation_status(&work_dir), @r"
+    insta::assert_snapshot!(get_colocation_status(&work_dir), @"
     Workspace is currently colocated with Git.
     Last imported/exported Git HEAD: (none)
     [EOF]
@@ -988,12 +988,12 @@ fn test_git_init_colocated_via_flag_git_dir_not_exists() {
 
     // If .git/HEAD pointed to the default bookmark, new working-copy commit would
     // be created on top.
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  e8849ae12c70 main master
     ◆  000000000000
     [EOF]
     ");
-    insta::assert_snapshot!(get_colocation_status(&work_dir), @r"
+    insta::assert_snapshot!(get_colocation_status(&work_dir), @"
     Workspace is currently colocated with Git.
     Last imported/exported Git HEAD: (none)
     [EOF]
@@ -1040,7 +1040,7 @@ fn test_git_init_conditional_config() {
     .success();
     run_jj(&old_workspace_dir, &["new"]).success();
     let output = run_jj(&old_workspace_dir, &["op", "log", "-T", op_log_template]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     @  base@old-repo new empty commit
     ○  base@base add workspace 'default'
     ○  @
@@ -1056,14 +1056,14 @@ fn test_git_init_conditional_config() {
     "#);
     run_jj(&new_workspace_dir, &["new"]).success();
     let output = run_jj(&new_workspace_dir, &["log", "-T", log_template]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     @  new-repo@example.org
     ○  new-repo@example.org
     ◆
     [EOF]
     ");
     let output = run_jj(&new_workspace_dir, &["op", "log", "-T", op_log_template]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     @  new-repo@base new empty commit
     ○  new-repo@base add workspace 'default'
     ○  @
@@ -1076,7 +1076,7 @@ fn test_git_init_bad_wc_path() {
     let test_env = TestEnvironment::default();
     std::fs::write(test_env.env_root().join("existing-file"), b"").unwrap();
     let output = test_env.run_jj_in(".", ["git", "init", "existing-file"]);
-    insta::assert_snapshot!(output.strip_stderr_last_line(), @r"
+    insta::assert_snapshot!(output.strip_stderr_last_line(), @"
     ------- stderr -------
     Error: Failed to create workspace
     [EOF]
@@ -1085,7 +1085,52 @@ fn test_git_init_bad_wc_path() {
 }
 
 #[test]
-fn test_git_init_colocate_in_git_worktree() {
+fn test_git_init_colocate_in_git_worktree_with_main_jj_repo() {
+    let test_env = TestEnvironment::default();
+    let main_repo_path = test_env.env_root().join("main-repo");
+    init_git_repo(&main_repo_path, false);
+
+    test_env
+        .run_jj_in(main_repo_path.to_str().unwrap(), ["git", "init", "--colocate"])
+        .success();
+
+    // Create a Git worktree
+    let worktree_path = test_env.env_root().join("worktree");
+    let status = std::process::Command::new("git")
+        .args([
+            "worktree",
+            "add",
+            worktree_path.to_str().unwrap(),
+            "-b",
+            "worktree-branch",
+        ])
+        .current_dir(&main_repo_path)
+        .status()
+        .expect("git worktree add failed to spawn");
+    assert!(status.success(), "git worktree add failed: {status}");
+
+    // Verify .git is a file (gitlink)
+    assert!(worktree_path.join(".git").is_file());
+
+    // Try to init colocated jj repo - should succeed
+    let output = test_env.run_jj_in(
+        worktree_path.to_str().unwrap(),
+        ["git", "init", "--colocate"],
+    );
+    insta::assert_snapshot!(output, @r#"
+    ------- stderr -------
+    Done importing changes from the underlying Git repo.
+    Initialized repo in "."
+    Hint: Running `git clean -xdf` will remove `.jj/`!
+    [EOF]
+    "#);
+
+    // Verify .jj directory was created
+    assert!(worktree_path.join(".jj").exists());
+}
+
+#[test]
+fn test_git_init_colocate_in_git_worktree_without_main_jj_repo() {
     let test_env = TestEnvironment::default();
     let main_repo_path = test_env.env_root().join("main-repo");
     init_git_repo(&main_repo_path, false);
@@ -1108,15 +1153,15 @@ fn test_git_init_colocate_in_git_worktree() {
     // Verify .git is a file (gitlink)
     assert!(worktree_path.join(".git").is_file());
 
-    // Try to init colocated jj repo - should fail
+    // Try to init colocated jj repo without a main jj repo - should fail
     let output = test_env.run_jj_in(
         worktree_path.to_str().unwrap(),
         ["git", "init", "--colocate"],
     );
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
-    Error: Cannot create a colocated jj repo inside a Git worktree.
-    Hint: Run `jj git init` in the main Git repository instead, or use `jj workspace add` to create additional jj workspaces.
+    Error: Cannot create a colocated jj workspace inside a Git worktree.
+    Hint: Run `jj git init --colocate` in the main Git repository first.
     [EOF]
     [exit status: 1]
     ");

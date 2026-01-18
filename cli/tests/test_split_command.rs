@@ -55,12 +55,12 @@ fn test_split_by_paths() {
     work_dir.write_file("file2", "foo");
     work_dir.write_file("file3", "foo");
 
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  qpvuntsmwlqt false
     ◆  zzzzzzzzzzzz true
     [EOF]
     ");
-    insta::assert_snapshot!(get_recorded_dates(&work_dir, "@"), @r"
+    insta::assert_snapshot!(get_recorded_dates(&work_dir, "@"), @"
     Author date:  2001-02-03 04:05:08.000 +07:00
     Committer date: 2001-02-03 04:05:08.000 +07:00[EOF]
     ");
@@ -71,7 +71,7 @@ fn test_split_by_paths() {
     )
     .unwrap();
     let output = work_dir.run_jj(["split", "file2"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Selected changes : qpvuntsm 6dbc7747 (no description set)
     Remaining changes: zsuskuln 42cbbc02 (no description set)
@@ -92,7 +92,7 @@ fn test_split_by_paths() {
     "#);
     assert!(!test_env.env_root().join("editor1").exists());
 
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  zsuskulnrvyr false
     ○  qpvuntsmwlqt false
     ◆  zzzzzzzzzzzz true
@@ -101,22 +101,22 @@ fn test_split_by_paths() {
 
     // The author dates of the new commits should be inherited from the commit being
     // split. The committer dates should be newer.
-    insta::assert_snapshot!(get_recorded_dates(&work_dir, "@"), @r"
+    insta::assert_snapshot!(get_recorded_dates(&work_dir, "@"), @"
     Author date:  2001-02-03 04:05:08.000 +07:00
     Committer date: 2001-02-03 04:05:10.000 +07:00[EOF]
     ");
-    insta::assert_snapshot!(get_recorded_dates(&work_dir, "@-"), @r"
+    insta::assert_snapshot!(get_recorded_dates(&work_dir, "@-"), @"
     Author date:  2001-02-03 04:05:08.000 +07:00
     Committer date: 2001-02-03 04:05:10.000 +07:00[EOF]
     ");
 
     let output = work_dir.run_jj(["diff", "-s", "-r", "@-"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     A file2
     [EOF]
     ");
     let output = work_dir.run_jj(["diff", "-s"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     A file1
     A file3
     [EOF]
@@ -125,7 +125,7 @@ fn test_split_by_paths() {
     // Insert an empty commit after @- with "split ."
     std::fs::write(&edit_script, "").unwrap();
     let output = work_dir.run_jj(["split", "-r", "@-", "."]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Warning: All changes have been selected, so the original revision will become empty
     Rebased 1 descendant commits
@@ -136,7 +136,7 @@ fn test_split_by_paths() {
     [EOF]
     ");
 
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  zsuskulnrvyr false
     ○  znkkpsqqskkl true
     ○  qpvuntsmwlqt false
@@ -145,7 +145,7 @@ fn test_split_by_paths() {
     ");
 
     let output = work_dir.run_jj(["diff", "-s", "-r", "@--"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     A file2
     [EOF]
     ");
@@ -156,7 +156,7 @@ fn test_split_by_paths() {
     // Insert an empty commit before @- with "split nonexistent"
     std::fs::write(&edit_script, "").unwrap();
     let output = work_dir.run_jj(["split", "-r", "@-", "nonexistent"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Warning: No matching entries for paths: nonexistent
     Warning: No changes have been selected, so the new revision will be empty
@@ -168,7 +168,7 @@ fn test_split_by_paths() {
     [EOF]
     ");
 
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  zsuskulnrvyr false
     ○  lylxulplsnyw false
     ○  qpvuntsmwlqt true
@@ -177,7 +177,7 @@ fn test_split_by_paths() {
     ");
 
     let output = work_dir.run_jj(["diff", "-s", "-r", "@-"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     A file2
     [EOF]
     ");
@@ -186,7 +186,7 @@ fn test_split_by_paths() {
     // Splitting a commit with deleted files should not show a warning.
     work_dir.remove_file("file1");
     let output = work_dir.run_jj(["split", "file1"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Warning: All changes have been selected, so the original revision will become empty
     Selected changes : uyznsvlq 971ccc0b (no description set)
@@ -221,7 +221,7 @@ fn test_split_with_non_empty_description() {
     )
     .unwrap();
     let output = work_dir.run_jj(["split", "file1"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Selected changes : qpvuntsm c7f7b14b part 1
     Remaining changes: kkmpptxz ac33a5a9 part 2
@@ -252,7 +252,7 @@ fn test_split_with_non_empty_description() {
     JJ:
     JJ: Lines starting with "JJ:" (like this one) will be removed.
     "#);
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  kkmpptxzrspx false part 2
     ○  qpvuntsmwlqt false part 1
     ◆  zzzzzzzzzzzz true
@@ -277,7 +277,7 @@ fn test_split_with_default_description() {
     )
     .unwrap();
     let output = work_dir.run_jj(["split", "file1"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Selected changes : qpvuntsm ff633dcc TESTED=TODO
     Remaining changes: rlvkpnrz b1d20b7e (no description set)
@@ -304,7 +304,7 @@ fn test_split_with_default_description() {
     JJ: Lines starting with "JJ:" (like this one) will be removed.
     "#);
     assert!(!test_env.env_root().join("editor2").exists());
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  rlvkpnrzqnoo false
     ○  qpvuntsmwlqt false TESTED=TODO
     ◆  zzzzzzzzzzzz true
@@ -332,7 +332,7 @@ fn test_split_with_descendants() {
     // Third commit.
     work_dir.write_file("file4", "foobarbaz\n");
     work_dir.run_jj(["describe", "-m", "Add file4"]).success();
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  kkmpptxzrspx false Add file4
     ○  rlvkpnrzqnoo false Add file3
     ○  qpvuntsmwlqt false Add file1 & file2
@@ -354,7 +354,7 @@ fn test_split_with_descendants() {
     )
     .unwrap();
     let output = work_dir.run_jj(["split", "file1", "-r", "qpvu"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Rebased 2 descendant commits
     Selected changes : qpvuntsm 74306e35 Add file1
@@ -363,7 +363,7 @@ fn test_split_with_descendants() {
     Parent commit (@-)      : rlvkpnrz d335bd94 Add file3
     [EOF]
     ");
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  kkmpptxzrspx false Add file4
     ○  rlvkpnrzqnoo false Add file3
     ○  royxmykxtrkr false Add file2
@@ -403,38 +403,38 @@ fn test_split_with_descendants() {
     // - The rewritten commit once the description is added during `jj commit`.
     // - The rewritten commit after the split.
     let evolog_1 = work_dir.run_jj(["evolog", "-r", "qpvun"]);
-    insta::assert_snapshot!(evolog_1, @r"
+    insta::assert_snapshot!(evolog_1, @"
     ○  qpvuntsm test.user@example.com 2001-02-03 08:05:12 74306e35
     │  Add file1
-    │  -- operation 994b490f285d split commit 1d2499e72cefc8a2b87ebb47569140857b96189f
+    │  -- operation 1e9d8f148fc0 split commit 1d2499e72cefc8a2b87ebb47569140857b96189f
     ○  qpvuntsm/1 test.user@example.com 2001-02-03 08:05:08 1d2499e7 (hidden)
     │  Add file1 & file2
-    │  -- operation adf4f33386c9 commit f5700f8ef89e290e4e90ae6adc0908707e0d8c85
+    │  -- operation 57291803fa5f commit f5700f8ef89e290e4e90ae6adc0908707e0d8c85
     ○  qpvuntsm/2 test.user@example.com 2001-02-03 08:05:08 f5700f8e (hidden)
     │  (no description set)
-    │  -- operation 78ead2155fcc snapshot working copy
+    │  -- operation 49a0649b33fa snapshot working copy
     ○  qpvuntsm/3 test.user@example.com 2001-02-03 08:05:07 e8849ae1 (hidden)
        (empty) (no description set)
-       -- operation 8f47435a3990 add workspace 'default'
+       -- operation f045ea2142cf add workspace 'default'
     [EOF]
     ");
 
     // The evolog for the second commit is the same, except that the change id
     // changes after the split.
     let evolog_2 = work_dir.run_jj(["evolog", "-r", "royxm"]);
-    insta::assert_snapshot!(evolog_2, @r"
+    insta::assert_snapshot!(evolog_2, @"
     ○  royxmykx test.user@example.com 2001-02-03 08:05:12 0a37745e
     │  Add file2
-    │  -- operation 994b490f285d split commit 1d2499e72cefc8a2b87ebb47569140857b96189f
+    │  -- operation 1e9d8f148fc0 split commit 1d2499e72cefc8a2b87ebb47569140857b96189f
     ○  qpvuntsm/1 test.user@example.com 2001-02-03 08:05:08 1d2499e7 (hidden)
     │  Add file1 & file2
-    │  -- operation adf4f33386c9 commit f5700f8ef89e290e4e90ae6adc0908707e0d8c85
+    │  -- operation 57291803fa5f commit f5700f8ef89e290e4e90ae6adc0908707e0d8c85
     ○  qpvuntsm/2 test.user@example.com 2001-02-03 08:05:08 f5700f8e (hidden)
     │  (no description set)
-    │  -- operation 78ead2155fcc snapshot working copy
+    │  -- operation 49a0649b33fa snapshot working copy
     ○  qpvuntsm/3 test.user@example.com 2001-02-03 08:05:07 e8849ae1 (hidden)
        (empty) (no description set)
-       -- operation 8f47435a3990 add workspace 'default'
+       -- operation f045ea2142cf add workspace 'default'
     [EOF]
     ");
 }
@@ -454,7 +454,7 @@ fn test_split_with_merge_child() {
     work_dir
         .run_jj(["new", "subject(1)", "subject(a)", "-m=2"])
         .success();
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @    zsuskulnrvyr true 2
     ├─╮
     │ ○  kkmpptxzrspx false a
@@ -471,7 +471,7 @@ fn test_split_with_merge_child() {
     )
     .unwrap();
     let output = work_dir.run_jj(["split", "-rsubject(a)", "file1"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Rebased 1 descendant commits
     Selected changes : kkmpptxz cc199567 Add file1
@@ -481,7 +481,7 @@ fn test_split_with_merge_child() {
     Parent commit (@-)      : royxmykx e488409f Add file2
     [EOF]
     ");
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @    zsuskulnrvyr true 2
     ├─╮
     │ ○  royxmykxtrkr false Add file2
@@ -506,7 +506,7 @@ fn test_split_parallel_no_descendants() {
     work_dir.write_file("file1", "foo\n");
     work_dir.write_file("file2", "bar\n");
 
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  qpvuntsmwlqt false
     ◆  zzzzzzzzzzzz true
     [EOF]
@@ -518,7 +518,7 @@ fn test_split_parallel_no_descendants() {
     )
     .unwrap();
     let output = work_dir.run_jj(["split", "--parallel", "file1"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Selected changes : qpvuntsm 7bcd474c TESTED=TODO
     Remaining changes: kkmpptxz 431886f6 (no description set)
@@ -527,7 +527,7 @@ fn test_split_parallel_no_descendants() {
     Added 0 files, modified 0 files, removed 1 files
     [EOF]
     ");
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  kkmpptxzrspx false
     │ ○  qpvuntsmwlqt false TESTED=TODO
     ├─╯
@@ -559,32 +559,32 @@ fn test_split_parallel_no_descendants() {
     // - The rewritten commit from the snapshot after the files were added.
     // - The rewritten commit after the split.
     let evolog_1 = work_dir.run_jj(["evolog", "-r", "qpvun"]);
-    insta::assert_snapshot!(evolog_1, @r"
+    insta::assert_snapshot!(evolog_1, @"
     ○  qpvuntsm test.user@example.com 2001-02-03 08:05:09 7bcd474c
     │  TESTED=TODO
-    │  -- operation 2b21c33e1596 split commit f5700f8ef89e290e4e90ae6adc0908707e0d8c85
+    │  -- operation e384849b2792 split commit f5700f8ef89e290e4e90ae6adc0908707e0d8c85
     ○  qpvuntsm/1 test.user@example.com 2001-02-03 08:05:08 f5700f8e (hidden)
     │  (no description set)
-    │  -- operation 1663cd1cc445 snapshot working copy
+    │  -- operation 1ff06018488a snapshot working copy
     ○  qpvuntsm/2 test.user@example.com 2001-02-03 08:05:07 e8849ae1 (hidden)
        (empty) (no description set)
-       -- operation 8f47435a3990 add workspace 'default'
+       -- operation f045ea2142cf add workspace 'default'
     [EOF]
     ");
 
     // The evolog for the second commit is the same, except that the change id
     // changes after the split.
     let evolog_2 = work_dir.run_jj(["evolog", "-r", "kkmpp"]);
-    insta::assert_snapshot!(evolog_2, @r"
+    insta::assert_snapshot!(evolog_2, @"
     @  kkmpptxz test.user@example.com 2001-02-03 08:05:09 431886f6
     │  (no description set)
-    │  -- operation 2b21c33e1596 split commit f5700f8ef89e290e4e90ae6adc0908707e0d8c85
+    │  -- operation e384849b2792 split commit f5700f8ef89e290e4e90ae6adc0908707e0d8c85
     ○  qpvuntsm/1 test.user@example.com 2001-02-03 08:05:08 f5700f8e (hidden)
     │  (no description set)
-    │  -- operation 1663cd1cc445 snapshot working copy
+    │  -- operation 1ff06018488a snapshot working copy
     ○  qpvuntsm/2 test.user@example.com 2001-02-03 08:05:07 e8849ae1 (hidden)
        (empty) (no description set)
-       -- operation 8f47435a3990 add workspace 'default'
+       -- operation f045ea2142cf add workspace 'default'
     [EOF]
     ");
 }
@@ -613,7 +613,7 @@ fn test_split_parallel_with_descendants() {
     // to the split command.
     work_dir.run_jj(["prev", "--edit"]).success();
     work_dir.run_jj(["prev", "--edit"]).success();
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     ○  kkmpptxzrspx false Add file4
     ○  rlvkpnrzqnoo false Add file3
     @  qpvuntsmwlqt false Add file1 & file2
@@ -635,7 +635,7 @@ fn test_split_parallel_with_descendants() {
     )
     .unwrap();
     let output = work_dir.run_jj(["split", "--parallel", "file1"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Rebased 2 descendant commits
     Selected changes : qpvuntsm 18c85f56 Add file1
@@ -645,7 +645,7 @@ fn test_split_parallel_with_descendants() {
     Added 0 files, modified 0 files, removed 1 files
     [EOF]
     ");
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     ○  kkmpptxzrspx false Add file4
     ○    rlvkpnrzqnoo false Add file3
     ├─╮
@@ -697,7 +697,7 @@ fn test_split_parallel_with_merge_child() {
     work_dir
         .run_jj(["new", "subject(1)", "subject(a)", "-m=2"])
         .success();
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @    zsuskulnrvyr true 2
     ├─╮
     │ ○  kkmpptxzrspx false a
@@ -714,7 +714,7 @@ fn test_split_parallel_with_merge_child() {
     )
     .unwrap();
     let output = work_dir.run_jj(["split", "-rsubject(a)", "--parallel", "file1"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Rebased 1 descendant commits
     Selected changes : kkmpptxz cc199567 Add file1
@@ -725,7 +725,7 @@ fn test_split_parallel_with_merge_child() {
     Parent commit (@-)      : royxmykx 82a5c527 Add file2
     [EOF]
     ");
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @      zsuskulnrvyr true 2
     ├─┬─╮
     │ │ ○  royxmykxtrkr false Add file2
@@ -751,7 +751,7 @@ fn test_split_parallel_with_conflict() {
     work_dir.run_jj(["new"]).success();
     work_dir.write_file("file", "line 1\nline 3\n");
     work_dir.run_jj(["prev", "--edit"]).success();
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     ○  kkmpptxzrspx false
     @  rlvkpnrzqnoo false
     ○  qpvuntsmwlqt false
@@ -766,7 +766,7 @@ fn test_split_parallel_with_conflict() {
     )
     .unwrap();
     let output = work_dir.run_jj(["split", "--parallel", "-i", "-m="]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Rebased 1 descendant commits
     Selected changes : rlvkpnrz abe15fea (no description set)
@@ -786,7 +786,7 @@ fn test_split_parallel_with_conflict() {
     Then run `jj squash` to move the resolution into the conflicted commit.
     [EOF]
     ");
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     ○    kkmpptxzrspx false
     ├─╮
     │ @  royxmykxtrkr false
@@ -813,7 +813,7 @@ fn test_split_parallel_with_conflict() {
 
     // The old commit shouldn't be conflicted, since it matches the selection from
     // the editor.
-    insta::assert_snapshot!(work_dir.run_jj(["file", "show", "-r=@+-~@", "file"]), @r"
+    insta::assert_snapshot!(work_dir.run_jj(["file", "show", "-r=@+-~@", "file"]), @"
     line 1
     line 2.1
     line 3
@@ -821,7 +821,7 @@ fn test_split_parallel_with_conflict() {
     ");
 
     // The child merge commit should keep the same contents.
-    insta::assert_snapshot!(work_dir.run_jj(["file", "show", "-r=@+", "file"]), @r"
+    insta::assert_snapshot!(work_dir.run_jj(["file", "show", "-r=@+", "file"]), @"
     line 1
     line 3
     [EOF]
@@ -837,7 +837,7 @@ fn test_split_empty() {
     work_dir.run_jj(["describe", "--message", "abc"]).success();
 
     let output = work_dir.run_jj(["split"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Error: Refusing to split empty commit 64eaeeb3e846248efc8b599a2b583b708104fc01.
     Hint: Use `jj new` if you want to create another empty commit.
@@ -884,7 +884,7 @@ fn test_split_interactive() {
 
     // Split the working commit interactively and select only file1
     let output = work_dir.run_jj(["split"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Selected changes : qpvuntsm c664a51b (no description set)
     Remaining changes: rlvkpnrz 7e5d65b1 (no description set)
@@ -894,7 +894,7 @@ fn test_split_interactive() {
     ");
 
     insta::assert_snapshot!(
-        std::fs::read_to_string(test_env.env_root().join("instrs")).unwrap(), @r"
+        std::fs::read_to_string(test_env.env_root().join("instrs")).unwrap(), @"
     You are splitting a commit into two: qpvuntsm f5700f8e (no description set)
 
     The diff initially shows the changes in the commit you're splitting.
@@ -917,7 +917,7 @@ fn test_split_interactive() {
     "#);
 
     let output = work_dir.run_jj(["log", "--summary"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     @  rlvkpnrz test.user@example.com 2001-02-03 08:05:08 7e5d65b1
     │  (no description set)
     │  A file2
@@ -961,7 +961,7 @@ fn test_split_interactive_with_paths() {
     // Select file1 and file2 by args, then select file1 interactively via the diff
     // script.
     let output = work_dir.run_jj(["split", "-i", "file1", "file2"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Selected changes : rlvkpnrz cdc9960a (no description set)
     Remaining changes: kkmpptxz 7255f070 (no description set)
@@ -983,7 +983,7 @@ fn test_split_interactive_with_paths() {
     "#);
 
     let output = work_dir.run_jj(["log", "--summary"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     @  kkmpptxz test.user@example.com 2001-02-03 08:05:09 7255f070
     │  (no description set)
     │  M file2
@@ -1027,7 +1027,7 @@ fn test_split_with_multiple_workspaces_same_working_copy() {
         .success();
     // Check the working-copy commit in each workspace in the log output. The "@"
     // node in the graph indicates the current workspace's working-copy commit.
-    insta::assert_snapshot!(get_workspace_log_output(&main_dir), @r"
+    insta::assert_snapshot!(get_workspace_log_output(&main_dir), @"
     @  qpvuntsmwlqt default@ second@ first-commit
     ◆  zzzzzzzzzzzz
     [EOF]
@@ -1042,7 +1042,7 @@ fn test_split_with_multiple_workspaces_same_working_copy() {
     .unwrap();
     main_dir.run_jj(["split", "file2"]).success();
     // The working copy for both workspaces will be the second split commit.
-    insta::assert_snapshot!(get_workspace_log_output(&main_dir), @r"
+    insta::assert_snapshot!(get_workspace_log_output(&main_dir), @"
     @  royxmykxtrkr default@ second@ second-commit
     ○  qpvuntsmwlqt first-commit
     ◆  zzzzzzzzzzzz
@@ -1057,7 +1057,7 @@ fn test_split_with_multiple_workspaces_same_working_copy() {
     )
     .unwrap();
     main_dir.run_jj(["split", "file2", "--parallel"]).success();
-    insta::assert_snapshot!(get_workspace_log_output(&main_dir), @r"
+    insta::assert_snapshot!(get_workspace_log_output(&main_dir), @"
     @  yostqsxwqrlt default@ second@ second-commit
     │ ○  qpvuntsmwlqt first-commit
     ├─╯
@@ -1085,7 +1085,7 @@ fn test_split_with_multiple_workspaces_different_working_copy() {
         .success();
     // Check the working-copy commit in each workspace in the log output. The "@"
     // node in the graph indicates the current workspace's working-copy commit.
-    insta::assert_snapshot!(get_workspace_log_output(&main_dir), @r"
+    insta::assert_snapshot!(get_workspace_log_output(&main_dir), @"
     @  qpvuntsmwlqt default@ first-commit
     │ ○  pmmvwywvzvvn second@
     ├─╯
@@ -1102,7 +1102,7 @@ fn test_split_with_multiple_workspaces_different_working_copy() {
     .unwrap();
     main_dir.run_jj(["split", "file2"]).success();
     // Only the working copy commit for the default workspace changes.
-    insta::assert_snapshot!(get_workspace_log_output(&main_dir), @r"
+    insta::assert_snapshot!(get_workspace_log_output(&main_dir), @"
     @  mzvwutvlkqwt default@ second-commit
     ○  qpvuntsmwlqt first-commit
     │ ○  pmmvwywvzvvn second@
@@ -1119,7 +1119,7 @@ fn test_split_with_multiple_workspaces_different_working_copy() {
     )
     .unwrap();
     main_dir.run_jj(["split", "file2", "--parallel"]).success();
-    insta::assert_snapshot!(get_workspace_log_output(&main_dir), @r"
+    insta::assert_snapshot!(get_workspace_log_output(&main_dir), @"
     @  vruxwmqvtpmx default@ second-commit
     │ ○  qpvuntsmwlqt first-commit
     ├─╯
@@ -1159,7 +1159,7 @@ fn test_split_with_non_empty_description_and_trailers() {
         commit_trailers = '''"Signed-off-by: " ++ committer.email()'''"#,
     );
     let output = work_dir.run_jj(["split", "file1"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Selected changes : qpvuntsm c7f7b14b part 1
     Remaining changes: kkmpptxz ac33a5a9 part 2
@@ -1194,7 +1194,7 @@ fn test_split_with_non_empty_description_and_trailers() {
     JJ:
     JJ: Lines starting with "JJ:" (like this one) will be removed.
     "#);
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  kkmpptxzrspx false part 2
     ○  qpvuntsmwlqt false part 1
     ◆  zzzzzzzzzzzz true
@@ -1214,7 +1214,7 @@ fn test_split_with_message() {
     let setup_opid = work_dir.current_operation_id();
 
     let output = work_dir.run_jj(["split", "-m", "fix in file1", "file1"]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Selected changes : qpvuntsm f2a70519 fix in file1
     Remaining changes: kkmpptxz cac11766 my feature
@@ -1223,7 +1223,7 @@ fn test_split_with_message() {
     [EOF]
     ");
 
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  kkmpptxzrspx false my feature
     ○  qpvuntsmwlqt false fix in file1
     ◆  zzzzzzzzzzzz true
@@ -1240,7 +1240,7 @@ fn test_split_with_message() {
         "fix in file1",
         "file1",
     ]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Selected changes : qpvuntsm d01cf12d fix in file1
     Remaining changes: royxmykx b1556ed9 my feature
@@ -1249,7 +1249,7 @@ fn test_split_with_message() {
     [EOF]
     ");
 
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  royxmykxtrkr false my feature
     ○  qpvuntsmwlqt false fix in file1
     │
@@ -1276,7 +1276,7 @@ fn test_split_move_first_commit() {
     work_dir.write_file("file5", "bar\n");
     work_dir.run_jj(["commit", "-m", "file5"]).success();
 
-    insta::assert_snapshot!(get_log_with_summary(&work_dir), @r"
+    insta::assert_snapshot!(get_log_with_summary(&work_dir), @"
     @  royxmykxtrkr
     ○  mzvwutvlkqwt file5
     │  A file5
@@ -1303,7 +1303,7 @@ fn test_split_move_first_commit() {
         "qpvuntsmwlqt",
         "file1",
     ]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Rebased 2 descendant commits
     Selected changes : vruxwmqv bf94c29a file1
@@ -1311,7 +1311,7 @@ fn test_split_move_first_commit() {
     [EOF]
     ");
 
-    insta::assert_snapshot!(get_log_with_summary(&work_dir), @r"
+    insta::assert_snapshot!(get_log_with_summary(&work_dir), @"
     @  royxmykxtrkr
     ○  mzvwutvlkqwt file5
     │  A file5
@@ -1339,7 +1339,7 @@ fn test_split_move_first_commit() {
         "qpvuntsmwlqt",
         "file1",
     ]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Rebased 2 descendant commits
     Selected changes : kpqxywon 08294e90 file1
@@ -1347,7 +1347,7 @@ fn test_split_move_first_commit() {
     [EOF]
     ");
 
-    insta::assert_snapshot!(get_log_with_summary(&work_dir), @r"
+    insta::assert_snapshot!(get_log_with_summary(&work_dir), @"
     @  royxmykxtrkr
     ○  mzvwutvlkqwt file5
     │  A file5
@@ -1375,7 +1375,7 @@ fn test_split_move_first_commit() {
         "rlvkpnrzqnoo",
         "file1",
     ]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Rebased 2 descendant commits
     Selected changes : lylxulpl b42b2604 file1
@@ -1383,7 +1383,7 @@ fn test_split_move_first_commit() {
     [EOF]
     ");
 
-    insta::assert_snapshot!(get_log_with_summary(&work_dir), @r"
+    insta::assert_snapshot!(get_log_with_summary(&work_dir), @"
     @  royxmykxtrkr
     ○  mzvwutvlkqwt file5
     │  A file5
@@ -1413,7 +1413,7 @@ fn test_split_move_first_commit() {
         "kkmpptxzrspx",
         "file1",
     ]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Rebased 2 descendant commits
     Selected changes : uyznsvlq d0338445 file1
@@ -1421,7 +1421,7 @@ fn test_split_move_first_commit() {
     [EOF]
     ");
 
-    insta::assert_snapshot!(get_log_with_summary(&work_dir), @r"
+    insta::assert_snapshot!(get_log_with_summary(&work_dir), @"
     @  royxmykxtrkr
     ○  mzvwutvlkqwt file5
     │  A file5
@@ -1449,7 +1449,7 @@ fn test_split_move_first_commit() {
         "@",
         "file1",
     ]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Rebased 3 descendant commits
     Selected changes : nmzmmopx 72225233 file1
@@ -1460,7 +1460,7 @@ fn test_split_move_first_commit() {
     [EOF]
     ");
 
-    insta::assert_snapshot!(get_log_with_summary(&work_dir), @r"
+    insta::assert_snapshot!(get_log_with_summary(&work_dir), @"
     @  royxmykxtrkr
     ○  nmzmmopxokps file1
     │  A file1
@@ -1490,7 +1490,7 @@ fn test_split_move_first_commit() {
         "kkmpptxzrspx",
         "file1",
     ]);
-    insta::assert_snapshot!(output, @r"
+    insta::assert_snapshot!(output, @"
     ------- stderr -------
     Rebased 3 descendant commits
     Selected changes : nlrtlrxv 1b6975b0 file1
@@ -1501,7 +1501,7 @@ fn test_split_move_first_commit() {
     [EOF]
     ");
 
-    insta::assert_snapshot!(get_log_with_summary(&work_dir), @r"
+    insta::assert_snapshot!(get_log_with_summary(&work_dir), @"
     @  royxmykxtrkr
     ○    nlrtlrxvuusk file1
     ├─╮  A file1
@@ -1552,7 +1552,7 @@ fn test_split_with_bookmarks(bookmark_behavior: BookmarkBehavior) {
         .run_jj(["bookmark", "set", "*le-signet*", "-r", "@"])
         .success();
     insta::allow_duplicates! {
-    insta::assert_snapshot!(get_log_output(&main_dir), @r"
+    insta::assert_snapshot!(get_log_output(&main_dir), @"
     @  qpvuntsmwlqt false *le-signet* first-commit
     ◆  zzzzzzzzzzzz true
     [EOF]
@@ -1570,7 +1570,7 @@ fn test_split_with_bookmarks(bookmark_behavior: BookmarkBehavior) {
     match bookmark_behavior {
         BookmarkBehavior::LeaveBookmarkWithTarget => {
             insta::allow_duplicates! {
-            insta::assert_snapshot!(output, @r"
+            insta::assert_snapshot!(output, @"
             ------- stderr -------
             Selected changes : qpvuntsm a481fe8a *le-signet* | first-commit
             Remaining changes: mzvwutvl 5f597a6e second-commit
@@ -1580,7 +1580,7 @@ fn test_split_with_bookmarks(bookmark_behavior: BookmarkBehavior) {
             ");
             }
             insta::allow_duplicates! {
-            insta::assert_snapshot!(get_log_output(&main_dir), @r"
+            insta::assert_snapshot!(get_log_output(&main_dir), @"
             @  mzvwutvlkqwt false second-commit
             ○  qpvuntsmwlqt false *le-signet* first-commit
             ◆  zzzzzzzzzzzz true
@@ -1590,7 +1590,7 @@ fn test_split_with_bookmarks(bookmark_behavior: BookmarkBehavior) {
         }
         BookmarkBehavior::Default | BookmarkBehavior::MoveBookmarkToChild => {
             insta::allow_duplicates! {
-            insta::assert_snapshot!(output, @r"
+            insta::assert_snapshot!(output, @"
             ------- stderr -------
             Selected changes : qpvuntsm a481fe8a first-commit
             Remaining changes: mzvwutvl 5f597a6e *le-signet* | second-commit
@@ -1600,7 +1600,7 @@ fn test_split_with_bookmarks(bookmark_behavior: BookmarkBehavior) {
             ");
             }
             insta::allow_duplicates! {
-            insta::assert_snapshot!(get_log_output(&main_dir), @r"
+            insta::assert_snapshot!(get_log_output(&main_dir), @"
             @  mzvwutvlkqwt false *le-signet* second-commit
             ○  qpvuntsmwlqt false first-commit
             ◆  zzzzzzzzzzzz true
@@ -1621,7 +1621,7 @@ fn test_split_with_bookmarks(bookmark_behavior: BookmarkBehavior) {
     match bookmark_behavior {
         BookmarkBehavior::LeaveBookmarkWithTarget => {
             insta::allow_duplicates! {
-            insta::assert_snapshot!(get_log_output(&main_dir), @r"
+            insta::assert_snapshot!(get_log_output(&main_dir), @"
             @  vruxwmqvtpmx false second-commit
             │ ○  qpvuntsmwlqt false *le-signet* first-commit
             ├─╯
@@ -1632,7 +1632,7 @@ fn test_split_with_bookmarks(bookmark_behavior: BookmarkBehavior) {
         }
         BookmarkBehavior::Default | BookmarkBehavior::MoveBookmarkToChild => {
             insta::allow_duplicates! {
-            insta::assert_snapshot!(get_log_output(&main_dir), @r"
+            insta::assert_snapshot!(get_log_output(&main_dir), @"
             @  vruxwmqvtpmx false *le-signet* second-commit
             │ ○  qpvuntsmwlqt false first-commit
             ├─╯
@@ -1704,7 +1704,7 @@ fn test_split_with_editor_and_message_args() {
     JJ:
     JJ: Lines starting with "JJ:" (like this one) will be removed.
     "#);
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  kkmpptxzrspx false edited message 2
     ○  qpvuntsmwlqt false edited message 1
     ◆  zzzzzzzzzzzz true
@@ -1780,7 +1780,7 @@ fn test_split_with_editor_and_empty_message() {
     JJ:
     JJ: Lines starting with "JJ:" (like this one) will be removed.
     "#);
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  kkmpptxzrspx false second commit
     ○  qpvuntsmwlqt false first commit
     ◆  zzzzzzzzzzzz true
@@ -1840,7 +1840,7 @@ fn test_split_with_editor_without_message() {
     JJ:
     JJ: Lines starting with "JJ:" (like this one) will be removed.
     "#);
-    insta::assert_snapshot!(get_log_output(&work_dir), @r"
+    insta::assert_snapshot!(get_log_output(&work_dir), @"
     @  kkmpptxzrspx false from editor2
     ○  qpvuntsmwlqt false from editor1
     ◆  zzzzzzzzzzzz true
